@@ -1,6 +1,8 @@
 class Map {
     constructor() {
         this.init();
+        this.line = new Line();
+        this.cache = {};
     }
 
     get tileServerUrl() {
@@ -21,13 +23,15 @@ class Map {
     }
 
     onMapClick(event) {
-        this.addStation(event.latlng)
+        this.addStation(event.latlng);
     }
 
     async getStationIcon() {
-        const path = "assets/stations/u-bahn.svg"
-        let station = await ajax(path);
-        return station;
+        if(!this.cache.stationIcon){
+            const path = "assets/stations/u-bahn.svg";
+            this.cache.stationIcon = await ajax(path);
+        }
+        return this.cache.stationIcon ;
     }
 
     get stationWidth() {
@@ -39,8 +43,8 @@ class Map {
     }
 
     bounds(position) {
-        let corner1 = L.latLng(position.lat-this.stationWidth/2, position.lng-this.stationHeight/2);
-        let corner2 = L.latLng(position.lat+this.stationWidth/2, position.lng+this.stationHeight/2);
+        let corner1 = L.latLng(position.lat - this.stationWidth / 2, position.lng - this.stationHeight / 2);
+        let corner2 = L.latLng(position.lat + this.stationWidth / 2, position.lng + this.stationHeight / 2);
         return L.latLngBounds(corner1, corner2);
     }
 
@@ -52,6 +56,31 @@ class Map {
         svgElement.innerHTML = station;
         let svgElementBounds = this.bounds(position);
         L.svgOverlay(svgElement, svgElementBounds).addTo(this.map);
+
+        this.line.addStation(new Station(position));
+        this.line.getLine().addTo(this.map);
+    }
+}
+
+class Station {
+    constructor(position) {
+        this.position = position;
+    }
+}
+
+class Line {
+    constructor() {
+        this.stations = []; // First station is start, last is end
+        this.polyline = L.polyline([], {color: '#115D91'});
+    }
+
+    addStation(station) {
+        this.stations.push(station);
+    }
+
+    getLine(){
+        this.polyline.setLatLngs(this.stations.map(station => station.position));
+        return this.polyline;
     }
 }
 
