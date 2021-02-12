@@ -20,18 +20,27 @@ class Map {
         }).addTo(this.map);
 
         this.map.on('click', (event) => this.onMapClick(event));
+        this.map.on('contextmenu', (event) => this.onMapRightClick(event));
     }
 
     onMapClick(event) {
         this.addStation(event.latlng);
     }
 
+    onMapRightClick(event) {
+        this.finishLine();
+    }
+
+    finishLine() {
+        this.line = undefined;
+    }
+
     async getStationIcon() {
-        if(!this.cache.stationIcon){
+        if (!this.cache.stationIcon) {
             const path = "assets/stations/u-bahn.svg";
             this.cache.stationIcon = await ajax(path);
         }
-        return this.cache.stationIcon ;
+        return this.cache.stationIcon;
     }
 
     get stationWidth() {
@@ -49,21 +58,26 @@ class Map {
     }
 
     async addStation(position) {
+        if (!this.line) {
+            this.line = new Line();
+        }
+
         let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svgElement.setAttribute('xmlns', "http://www.w3.org/2000/svg");
         svgElement.setAttribute('viewBox', "0 0 200 200");
         let station = await this.getStationIcon();
         svgElement.innerHTML = station;
         let svgElementBounds = this.bounds(position);
-        L.svgOverlay(svgElement, svgElementBounds).addTo(this.map);
-
-        this.line.addStation(new Station(position));
+        let svgOverlay = L.svgOverlay(svgElement, svgElementBounds)
+        this.line.addStation(new Station(position, svgOverlay));
+        svgOverlay.addTo(this.map);
         this.line.getLine().addTo(this.map);
     }
 }
 
 class Station {
-    constructor(position) {
+    constructor(position, overlay) {
+        this.overlay = overlay;
         this.position = position;
     }
 }
@@ -71,14 +85,14 @@ class Station {
 class Line {
     constructor() {
         this.stations = []; // First station is start, last is end
-        this.polyline = L.polyline([], {color: '#115D91'});
+        this.polyline = L.polyline([], { color: '#115D91' });
     }
 
     addStation(station) {
         this.stations.push(station);
     }
 
-    getLine(){
+    getLine() {
         this.polyline.setLatLngs(this.stations.map(station => station.position));
         return this.polyline;
     }
