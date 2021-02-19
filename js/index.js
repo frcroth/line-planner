@@ -1,8 +1,8 @@
 class Map {
     constructor() {
         this.init();
-        this.line = new Line();
         this.cache = {};
+        this.lines = [];
     }
 
     get tileServerUrl() {
@@ -29,6 +29,20 @@ class Map {
 
     onMapRightClick(event) {
         this.finishLine();
+    }
+
+    onStationClick(event, station) {
+        L.DomEvent.stopPropagation(event);
+
+        // Simple click is naming
+        //TODO
+
+        // Click while drawing line means circle line
+        if (this.line.stations[0] == station) {
+            this.line.addStation(station);
+            this.line.getLine().addTo(this.map);
+            this.finishLine();
+        }
     }
 
     finishLine() {
@@ -60,6 +74,7 @@ class Map {
     async addStation(position) {
         if (!this.line) {
             this.line = new Line();
+            this.lines.push(this.line);
         }
 
         let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -68,18 +83,22 @@ class Map {
         let station = await this.getStationIcon();
         svgElement.innerHTML = station;
         let svgElementBounds = this.bounds(position);
-        let svgOverlay = L.svgOverlay(svgElement, svgElementBounds)
-        this.line.addStation(new Station(position, svgOverlay));
+        let svgOverlay = L.svgOverlay(svgElement, svgElementBounds, { interactive: true })
+        this.line.addStation(new Station(position, svgOverlay, this.line));
         svgOverlay.addTo(this.map);
         this.line.getLine().addTo(this.map);
     }
 }
 
 class Station {
-    constructor(position, overlay) {
+    constructor(position, overlay, line) {
         this.overlay = overlay;
         this.position = position;
+        this.lines = [line];
+        this.map = document.map;
+        overlay.on('click', (event) => this.map.onStationClick(event, this));
     }
+
 }
 
 class Line {
@@ -90,6 +109,10 @@ class Line {
 
     addStation(station) {
         this.stations.push(station);
+    }
+
+    get isCircleLine() {
+        return this.stations[0] == this.stations[this.stations.length - 1];
     }
 
     getLine() {
