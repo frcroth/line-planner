@@ -99,20 +99,39 @@ class Map {
 }
 
 class Station {
+    static stationId = 0;
+
     constructor(position, overlay, line) {
+        this.id = Station.stationId++;
         this.overlay = overlay;
         this.position = position;
         this.lines = [line];
+        this.name = this.getInitialName();
         this.map = document.map;
         overlay.on('click', (event) => this.map.onStationClick(event, this));
+
+        document.ui.addStation(this);
+    }
+
+    getInitialName() {
+        // Possible solutions:
+        // 1. Create a plausible random name
+        // 2. Create a generic name with a number
+        // 3. Get a name from the geolocation
+        return "Station " + this.id;
     }
 
 }
 
 class Line {
+
+    static lineId = 0;
+
     constructor() {
+        this.id = Line.lineId++;
         this.stations = []; // First station is start, last is end
         this.polyline = L.polyline([], { color: '#115D91' });
+        document.ui.addLine(this);
     }
 
     addStation(station) {
@@ -142,4 +161,44 @@ function ajax(url) {
     });
 }
 
+
+class UI {
+    constructor(id) {
+        this.container = document.getElementById(id);
+        this.lineContainers = {};
+        this.stationContainers = {};
+
+        this.lineOverview = document.createElement("div");
+        this.lineOverview.classList.add("row");
+        this.container.appendChild(this.lineOverview);
+    }
+
+    addLine(line) {
+        const lineContainer = document.createElement("div");
+        const lineDescription = document.createElement("h5");
+        lineDescription.innerHTML = "Line " + line.id;
+        lineContainer.appendChild(lineDescription);
+
+        lineContainer.classList.add("line", "col");
+        this.lineOverview.appendChild(lineContainer);
+        this.lineContainers[line.id] = lineContainer;
+    }
+
+    addStation(station) {
+        const stationContainer = document.createElement("div");
+        stationContainer.classList.add("station-container");
+        this.stationContainers[station.id] = stationContainer;
+
+        const stationText = document.createElement("p");
+        stationText.innerHTML = station.name;
+        stationContainer.appendChild(stationText);
+
+
+        this.lineContainers[station.lines[0].id].appendChild(stationContainer);
+    }
+
+
+}
+
 document.map = new Map();
+document.ui = new UI("ui");
