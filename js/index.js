@@ -34,11 +34,19 @@ class Map {
     onStationClick(event, station) {
         L.DomEvent.stopPropagation(event);
 
+        // Create cross station
+        if (this.line) {
+            this.line.addStation(station);
+            station.lines.push(this.line);
+            this.line.getLine().addTo(this.map);
+            return;
+        }
+
         // Simple click is naming
         //TODO
 
         // Click while drawing line means circle line
-        if (this.line.stations[0] == station) {
+        if (this.line && this.line.stations[0] == station) {
             this.line.addStation(station);
             this.line.getLine().addTo(this.map);
             this.finishLine();
