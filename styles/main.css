@@ -1,3 +1,12 @@
 #map {
     height: 600px;
 }
+
+.station-name {
+    color: #115d91 !important;
+    font-size: 1.2em;
+    background-color: transparent !important;
+    border-width: 0px !important;
+    box-shadow: none !important;
+    font-weight: bolder;
+}

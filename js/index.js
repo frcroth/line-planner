@@ -42,15 +42,16 @@ class Map {
             return;
         }
 
-        // Simple click is naming
-        //TODO
-
         // Click while drawing line means circle line
         if (this.line && this.line.stations[0] == station) {
             this.line.addStation(station);
             this.line.getLine().addTo(this.map);
             this.finishLine();
+            return;
         }
+
+        // Simple click is naming
+        station.namePrompt();
     }
 
     finishLine() {
@@ -108,9 +109,17 @@ class Station {
         this.lines = [line];
         this.name = this.getInitialName();
         this.map = document.map;
-        overlay.on('click', (event) => this.map.onStationClick(event, this));
+        overlay.on('click', event => this.map.onStationClick(event, this));
+        this.generateMarker();
 
         document.ui.addStation(this);
+    }
+
+    generateMarker() {
+        this.marker?.remove();
+        this.marker = new L.marker(this.position, { opacity: 0.001 });
+        this.marker.bindTooltip(this.name, {permanent: true, className: "station-name", offset: [0.0005, 0] });
+        this.marker.addTo(this.map.map);
     }
 
     getInitialName() {
@@ -119,6 +128,25 @@ class Station {
         // 2. Create a generic name with a number
         // 3. Get a name from the geolocation
         return "Station " + this.id;
+    }
+
+    async namePrompt(){
+        const { value: name } = await Swal.fire({
+            title: 'Enter Station name',
+            input: 'text',
+            inputPlaceholder: this.name,
+            showCancelButton: true,
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'You need to write something!'
+                }
+            }
+        })
+
+        if (name) {
+            this.name = name;
+            this.generateMarker();
+        }
     }
 
 }
