@@ -1,3 +1,5 @@
+/* global L, Swal*/
+
 class Map {
     constructor() {
         this.init();
@@ -10,24 +12,24 @@ class Map {
     }
 
     init() {
-        this.map = L.map('map', {
+        this.map = L.map("map", {
             center: [52.511, 13.411],
             zoom: 13
         });
 
         L.tileLayer(this.tileServerUrl, {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors"
         }).addTo(this.map);
 
-        this.map.on('click', (event) => this.onMapClick(event));
-        this.map.on('contextmenu', (event) => this.onMapRightClick(event));
+        this.map.on("click", (event) => this.onMapClick(event));
+        this.map.on("contextmenu", (event) => this.onMapRightClick(event));
     }
 
     onMapClick(event) {
         this.addStation(event.latlng);
     }
 
-    onMapRightClick(event) {
+    onMapRightClick() {
         this.finishLine();
     }
 
@@ -87,12 +89,12 @@ class Map {
         }
 
         let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svgElement.setAttribute('xmlns', "http://www.w3.org/2000/svg");
-        svgElement.setAttribute('viewBox', "0 0 200 200");
+        svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        svgElement.setAttribute("viewBox", "0 0 200 200");
         let station = await this.getStationIcon();
         svgElement.innerHTML = station;
         let svgElementBounds = this.bounds(position);
-        let svgOverlay = L.svgOverlay(svgElement, svgElementBounds, { interactive: true })
+        let svgOverlay = L.svgOverlay(svgElement, svgElementBounds, { interactive: true });
         this.line.addStation(new Station(position, svgOverlay, this.line));
         svgOverlay.addTo(this.map);
         this.line.getLine().addTo(this.map);
@@ -100,8 +102,6 @@ class Map {
 }
 
 class Station {
-    static stationId = 0;
-
     constructor(position, overlay, line) {
         this.id = Station.stationId++;
         this.overlay = overlay;
@@ -109,7 +109,7 @@ class Station {
         this.lines = [line];
         this.name = this.getInitialName();
         this.map = document.map;
-        overlay.on('click', event => this.map.onStationClick(event, this));
+        overlay.on("click", event => this.map.onStationClick(event, this));
         this.generateMarker();
 
         document.ui.addStation(this);
@@ -132,16 +132,16 @@ class Station {
 
     async namePrompt(){
         const { value: name } = await Swal.fire({
-            title: 'Enter Station name',
-            input: 'text',
+            title: "Enter Station name",
+            input: "text",
             inputPlaceholder: this.name,
             showCancelButton: true,
             inputValidator: (value) => {
                 if (!value) {
-                    return 'You need to write something!'
+                    return "You need to write something!";
                 }
             }
-        })
+        });
 
         if (name) {
             this.name = name;
@@ -150,15 +150,13 @@ class Station {
     }
 
 }
+Station.stationId = 0;
 
 class Line {
-
-    static lineId = 0;
-
     constructor() {
         this.id = Line.lineId++;
         this.stations = []; // First station is start, last is end
-        this.polyline = L.polyline([], { color: '#115D91' });
+        this.polyline = L.polyline([], { color: "#115D91" });
         document.ui.addLine(this);
     }
 
@@ -184,11 +182,11 @@ function ajax(url) {
             resolve(this.responseText);
         };
         xhr.onerror = reject;
-        xhr.open('GET', url);
+        xhr.open("GET", url);
         xhr.send();
     });
 }
-
+Line.lineId = 0;
 
 class UI {
     constructor(id) {
