@@ -36,6 +36,15 @@ class Map {
     onStationClick(event, station) {
         L.DomEvent.stopPropagation(event);
 
+        // Click while drawing line means circle line
+        if (this.line && this.line.stations[0] == station) {
+            this.line.addStation(station);
+            this.line.redraw();
+            document.undoManager.push({ type: "create circle", station, line: this.line });
+            this.finishLine();
+            return;
+        }
+
         // Create cross station
         if (this.line) {
             if (station.lines.includes(this.line)) {
@@ -45,14 +54,6 @@ class Map {
             station.lines.push(this.line);
             this.line.redraw();
             document.undoManager.push({ type: "cross station", station, line: this.line, index: this.line.stations.length - 1 });
-            return;
-        }
-
-        // Click while drawing line means circle line
-        if (this.line && this.line.stations[0] == station) {
-            this.line.addStation(station);
-            this.line.redraw();
-            this.finishLine();
             return;
         }
 
@@ -268,6 +269,10 @@ class UndoManager {
             station.name = operation.old;
             station.generateMarker();
             break;
+        case "create circle":
+            operation.line.stations.pop();
+            operation.line.redraw();
+            break;
         }
     }
 
@@ -304,6 +309,10 @@ class UndoManager {
         case "rename station":
             station.name = operation.new;
             station.generateMarker();
+            break;
+        case "create circle":
+            operation.line.addStation(station);
+            operation.line.redraw();
             break;
         }
     }
