@@ -38,10 +38,13 @@ class Map {
 
         // Create cross station
         if (this.line) {
+            if (station.lines.includes(this.line)) {
+                return; // Do not cross the station with itself!
+            }
             this.line.addStation(station);
             station.lines.push(this.line);
             this.line.redraw();
-            document.undoManager.push({ type: "create station", station });
+            document.undoManager.push({ type: "cross station", station, line: this.line, index: this.line.stations.length - 1 });
             return;
         }
 
@@ -59,7 +62,7 @@ class Map {
 
     finishLine() {
         this.line = undefined;
-    }    
+    }
 
     async addNewStation(position) {
         if (!this.line) {
@@ -160,14 +163,38 @@ class Station {
 
     remove() {
         this.overlay.remove();
-        
+
+        this.linePositions = {}; // Used to restore the station to the correct position in each line
         this.lines.forEach(line => {
             let stationIndex = line.stations.indexOf(this);
+            this.linePositions[line.id] = stationIndex;
             line.stations.splice(stationIndex, 1);
             line.redraw();
         });
-        
+
         this.marker.remove();
+    }
+
+    removeCross(line) {
+        let stationIndex = line.stations.indexOf(this);
+        line.stations.splice(stationIndex, 1);
+        this.lines = this.lines.filter(l => l.id != line.id);
+        line.redraw();
+    }
+
+    restore() {
+        this.overlay.addTo(this.map.map);
+        this.lines.forEach(line => {
+            line.stations.splice(this.linePositions[line.id], 0, this);
+            line.redraw();
+        });
+        this.generateMarker();
+    }
+
+    restoreCross(line, index) {
+        this.lines.push(line);
+        line.stations.splice(index, 0, this);
+        line.redraw();
     }
 
 }
@@ -214,6 +241,7 @@ document.onkeydown = keyPress;
 class UndoManager {
     constructor() {
         this.operations = [];
+        this.undoOperations = [];
     }
 
     push(operation) {
@@ -233,6 +261,9 @@ class UndoManager {
         case "create station":
             station.remove();
             break;
+        case "cross station":
+            station.removeCross(operation.line);
+            break;
         case "rename station":
             station.name = operation.old;
             station.generateMarker();
@@ -241,8 +272,40 @@ class UndoManager {
     }
 
     undo() {
+        if (this.operations.length < 1) {
+            return true;
+        }
         let previousOperation = this.pop();
         this.revert(previousOperation);
+        this.undoOperations.push(previousOperation);
+    }
+
+    redo() {
+        if (this.undoOperations.length < 1) {
+            return;
+        }
+        let undidOperation = this.undoOperations.pop();
+        this.redoOperation(undidOperation);
+        this.operations.push(undidOperation);
+    }
+
+    redoOperation(operation) {
+        if (!operation || !operation.type) {
+            return;
+        }
+        let station = operation.station;
+        switch (operation.type) {
+        case "create station":
+            station.restore();
+            break;
+        case "cross station":
+            station.restoreCross(operation.line, operation.index);
+            break;
+        case "rename station":
+            station.name = operation.new;
+            station.generateMarker();
+            break;
+        }
     }
 }
 
