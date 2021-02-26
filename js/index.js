@@ -73,7 +73,6 @@ class Map {
 
         let station = new Station(position, this.line);
 
-        this.line.addStation(station);
         document.undoManager.push({ type: "create station", station });
     }
 }
@@ -84,12 +83,13 @@ class Station {
         this.map = document.map;
         this.position = position;
         this.name = this.getInitialName();
+        line.addStation(this);
         this.lines = [line];
 
         this.createOverlay();
         this.generateMarker();
 
-        document.ui.addStation(this);
+        document.ui.build();
     }
 
     async getStationIcon() {
@@ -142,6 +142,13 @@ class Station {
         return "Station " + this.id;
     }
 
+
+    setName(name) {
+        this.name = name;
+        this.generateMarker();
+        document.ui.build();
+    }
+
     async namePrompt() {
         const { value: name } = await Swal.fire({
             title: "Enter Station name",
@@ -157,45 +164,36 @@ class Station {
 
         if (name) {
             document.undoManager.push({ type: "rename station", station: this, old: this.name, new: name });
-            this.name = name;
-            this.generateMarker();
+            this.setName(name);
+
         }
     }
 
     remove() {
         this.overlay.remove();
-
         this.linePositions = {}; // Used to restore the station to the correct position in each line
         this.lines.forEach(line => {
-            let stationIndex = line.stations.indexOf(this);
-            this.linePositions[line.id] = stationIndex;
-            line.stations.splice(stationIndex, 1);
-            line.redraw();
+            this.linePositions[line.id] = line.stations.indexOf(this);
+            line.removeStation(this);
         });
-
         this.marker.remove();
     }
 
     removeCross(line) {
-        let stationIndex = line.stations.indexOf(this);
-        line.stations.splice(stationIndex, 1);
+        line.removeStation(this);
         this.lines = this.lines.filter(l => l.id != line.id);
         line.redraw();
     }
 
     restore() {
         this.overlay.addTo(this.map.map);
-        this.lines.forEach(line => {
-            line.stations.splice(this.linePositions[line.id], 0, this);
-            line.redraw();
-        });
+        this.lines.forEach(line => line.addStationAtIndex(this, this.linePositions[line.id]));
         this.generateMarker();
     }
 
     restoreCross(line, index) {
         this.lines.push(line);
-        line.stations.splice(index, 0, this);
-        line.redraw();
+        line.addStationAtIndex(this, index);
     }
 
 }
@@ -207,11 +205,25 @@ class Line {
         this.map = document.map.map;
         this.stations = []; // First station is start, last is end
         this.polyline = L.polyline([], { color: "#115D91" });
-        document.ui.addLine(this);
+        document.ui.build();
     }
 
     addStation(station) {
-        this.stations.push(station);
+        this.addStationAtIndex(station, this.stations.length);
+    }
+
+    addStationAtIndex(station, index) {
+        this.stations.splice(index, 0, station);
+        this.redraw();
+    }
+
+    removeStation(station) {
+        let stationIndex = this.stations.indexOf(station);
+        this.removeStationByIndex(stationIndex);
+    }
+
+    removeStationByIndex(index) {
+        this.stations.splice(index, 1);
         this.redraw();
     }
 
@@ -266,14 +278,14 @@ class UndoManager {
             station.removeCross(operation.line);
             break;
         case "rename station":
-            station.name = operation.old;
-            station.generateMarker();
+            station.setName(operation.old);
             break;
         case "create circle":
             operation.line.stations.pop();
             operation.line.redraw();
             break;
         }
+        document.ui.build();
     }
 
     undo() {
@@ -307,14 +319,14 @@ class UndoManager {
             station.restoreCross(operation.line, operation.index);
             break;
         case "rename station":
-            station.name = operation.new;
-            station.generateMarker();
+            station.setName(operation.new);
             break;
         case "create circle":
             operation.line.addStation(station);
             operation.line.redraw();
             break;
         }
+        document.ui.build();
     }
 }
 
@@ -338,10 +350,23 @@ class UI {
         this.container = document.getElementById(id);
         this.lineContainers = {};
         this.stationContainers = {};
+        this.model = document.map;
 
+        this.build();
+    }
+
+    build() {
+        this.container.innerHTML = "";
         this.lineOverview = document.createElement("div");
         this.lineOverview.classList.add("row");
         this.container.appendChild(this.lineOverview);
+
+        this.model.lines.forEach(line => {
+            if (line.stations.length != 0) {
+                this.addLine(line);
+                line.stations.forEach(station => this.addStation(station, line));
+            }
+        });
     }
 
     addLine(line) {
@@ -355,7 +380,7 @@ class UI {
         this.lineContainers[line.id] = lineContainer;
     }
 
-    addStation(station) {
+    addStation(station, line) {
         const stationContainer = document.createElement("div");
         stationContainer.classList.add("station-container");
         this.stationContainers[station.id] = stationContainer;
@@ -365,7 +390,7 @@ class UI {
         stationContainer.appendChild(stationText);
 
 
-        this.lineContainers[station.lines[0].id].appendChild(stationContainer);
+        this.lineContainers[line.id].appendChild(stationContainer);
     }
 
 
