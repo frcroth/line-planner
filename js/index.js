@@ -280,6 +280,9 @@ class UndoManager {
         case "rename station":
             station.setName(operation.old);
             break;
+        case "remove station":
+            station.restore();
+            break;
         case "create circle":
             operation.line.stations.pop();
             operation.line.redraw();
@@ -320,6 +323,9 @@ class UndoManager {
             break;
         case "rename station":
             station.setName(operation.new);
+            break;
+        case "remove station":
+            station.remove();
             break;
         case "create circle":
             operation.line.addStation(station);
@@ -382,13 +388,29 @@ class UI {
 
     addStation(station, line) {
         const stationContainer = document.createElement("div");
-        stationContainer.classList.add("station-container");
+        stationContainer.classList.add("station-container", "container", "form-inline");
         this.stationContainers[station.id] = stationContainer;
 
-        const stationText = document.createElement("p");
-        stationText.innerHTML = station.name;
-        stationContainer.appendChild(stationText);
+        const stationLabel = document.createElement("label");
+        stationLabel.classList.add("station-label");
+        stationLabel.innerHTML = station.name;
+        stationContainer.appendChild(stationLabel);
 
+        const stationRenameButton = document.createElement("button");
+        stationRenameButton.onclick = () => station.namePrompt();
+        stationRenameButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
+        stationRenameButton.innerHTML = "<i class=\"fas fa-pen\"></i>";
+        stationContainer.appendChild(stationRenameButton);
+
+        const stationDeleteButton = document.createElement("button");
+        stationDeleteButton.onclick = () => {
+            document.undoManager.push({type: "remove station", station});
+            station.remove();
+            document.ui.build();
+        };
+        stationDeleteButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
+        stationDeleteButton.innerHTML = "<i class=\"fas fa-trash\"></i>";
+        stationContainer.appendChild(stationDeleteButton);
 
         this.lineContainers[line.id].appendChild(stationContainer);
     }

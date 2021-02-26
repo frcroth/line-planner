@@ -30,3 +30,7 @@
 #empty-box {
     height: 60px;
 }
+
+.station-label {
+    margin-right: 5px;
+}
