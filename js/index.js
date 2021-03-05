@@ -76,7 +76,7 @@ class Map {
                 return; // Do not cross the station with itself!
             }
             this.line.addStation(station);
-            station.lines.push(this.line);
+            station.addCross(this.line);
             this.line.redraw();
             document.undoManager.push({ type: "cross station", station, line: this.line, index: this.line.stations.length - 1 });
             return;
@@ -143,15 +143,15 @@ class Station {
         return 0.001;
     }
 
-    async createOverlay() {
+    async createOverlay(crossing = false) {
         let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
         svgElement.setAttribute("viewBox", "0 0 200 200");
 
-        let stationIcon = await this.getStationIcon();
+        let stationIcon = crossing ? await this.getCrossingStationIcon() : await this.getStationIcon();
 
         svgElement.innerHTML = stationIcon;
-        let svgElementBounds = this.bounds(this.position);
+        let svgElementBounds = this.bounds();
         this.overlay = L.svgOverlay(svgElement, svgElementBounds, { interactive: true });
         this.overlay.on("click", event => this.map.onStationClick(event, this));
 
@@ -163,6 +163,22 @@ class Station {
         this.marker = new L.marker(this.position, { opacity: 0.001 });
         this.marker.bindTooltip(this.name, { permanent: true, className: "station-name", offset: [0.0005, 0] });
         this.marker.addTo(this.map.map);
+    }
+
+    async getCrossingStationIcon() {
+        if (!this.map.cache.crossing) {
+            const path = "assets/misc/crossing.svg";
+            this.map.cache.crossing = await ajax(path);
+        }
+        return this.map.cache.crossing;
+    }
+
+    async addCross(line) {
+        this.lines.push(line);
+        if(line.lineType.id !== this.primaryLineType.id){
+            this.overlay.remove();
+            this.createOverlay(true);
+        }
     }
 
     getInitialName() {
