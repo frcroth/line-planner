@@ -5,6 +5,7 @@ class Map {
         this.init();
         this.cache = {};
         this.lines = [];
+        this.currentLineType = this.lineTypes["u"];
     }
 
     get tileServerUrl() {
@@ -23,6 +24,30 @@ class Map {
 
         this.map.on("click", (event) => this.onMapClick(event));
         this.map.on("contextmenu", (event) => this.onMapRightClick(event));
+    }
+
+    get lineTypes() {
+        return {
+            u : {
+                id : "u",
+                name : "U-Bahn",
+                icon: "assets/u/station.svg",
+                color: "#115D91",
+                lineNamePrefix: "U"
+            },
+            s : {
+                id : "s",
+                name : "S-Bahn",
+                icon : "assets/s/station.svg",
+                color: "#008e4e",
+                lineNamePrefix : "S"
+            }
+        };
+    }
+
+    selectLineType(lineType){
+        this.currentLineType = this.lineTypes[lineType];
+        this.finishLine();
     }
 
     onMapClick(event) {
@@ -67,7 +92,7 @@ class Map {
 
     async addNewStation(position) {
         if (!this.line) {
-            this.line = new Line();
+            this.line = new Line(this.currentLineType);
             this.lines.push(this.line);
         }
 
@@ -92,12 +117,16 @@ class Station {
         document.ui.build();
     }
 
+    get primaryLineType() {
+        return this.lines[0].lineType;
+    }
+
     async getStationIcon() {
-        if (!this.map.cache.stationIcon) {
-            const path = "assets/stations/u-bahn.svg";
-            this.map.cache.stationIcon = await ajax(path);
+        if (!this.map.cache[this.primaryLineType.id]) {
+            const path = this.primaryLineType.icon;
+            this.map.cache[this.primaryLineType.id] = await ajax(path);
         }
-        return this.map.cache.stationIcon;
+        return this.map.cache[this.primaryLineType.id];
     }
 
     bounds() {
@@ -118,7 +147,9 @@ class Station {
         let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
         svgElement.setAttribute("viewBox", "0 0 200 200");
+
         let stationIcon = await this.getStationIcon();
+
         svgElement.innerHTML = stationIcon;
         let svgElementBounds = this.bounds(this.position);
         this.overlay = L.svgOverlay(svgElement, svgElementBounds, { interactive: true });
@@ -197,14 +228,16 @@ class Station {
     }
 
 }
-Station.stationId = 0;
+Station.stationId = 1;
 
 class Line {
-    constructor() {
+    constructor(lineType) {
         this.id = Line.lineId++;
         this.map = document.map.map;
         this.stations = []; // First station is start, last is end
-        this.polyline = L.polyline([], { color: "#115D91" });
+        this.lineType = lineType;
+        this.polyline = L.polyline([], { color: this.lineType.color });
+        
         document.ui.build();
     }
 
@@ -234,6 +267,10 @@ class Line {
     getPolyLine() {
         this.polyline.setLatLngs(this.stations.map(station => station.position));
         return this.polyline;
+    }
+
+    get name() {
+        return `${this.lineType.lineNamePrefix} ${this.id}`;
     }
 
     redraw() {
@@ -349,7 +386,7 @@ function ajax(url) {
         xhr.send();
     });
 }
-Line.lineId = 0;
+Line.lineId = 1;
 
 class UI {
     constructor(id) {
@@ -358,7 +395,15 @@ class UI {
         this.stationContainers = {};
         this.model = document.map;
 
+        this.initLineSelector();
+
         this.build();
+    }
+
+    initLineSelector() {
+        document.getElementById("u-bahn-radio").onchange = () => document.map.selectLineType("u");
+        document.getElementById("s-bahn-radio").onchange = () => document.map.selectLineType("s");
+        document.getElementById("u-bahn-radio").checked = true;
     }
 
     build() {
@@ -378,7 +423,7 @@ class UI {
     addLine(line) {
         const lineContainer = document.createElement("div");
         const lineDescription = document.createElement("h5");
-        lineDescription.innerHTML = "Line " + line.id;
+        lineDescription.innerHTML = line.name;
         lineContainer.appendChild(lineDescription);
 
         lineContainer.classList.add("line", "col");

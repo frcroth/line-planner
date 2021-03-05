@@ -9,7 +9,7 @@
     <title>Line planner</title>
 
     <link rel="stylesheet" href="styles/main.css">
-    <link rel="icon" type="image/svg+xml" href="assets/stations/u-bahn.svg">
+    <link rel="icon" type="image/svg+xml" href="assets/u/station.svg">
     <!-- Bootstrap -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
         integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous" />
@@ -41,6 +41,17 @@
     </div>
     <div class="container">
         <p>Draw a line by clicking at the stations you want to create. Finish drawing with a right click. Clicking on a station allows renaming.</p>
+    </div>
+    <div class="container">
+        <span>Choose line type &nbsp;</span>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="lineSelection" id="u-bahn-radio" value="u-bahn" checked="true">
+            <label class="form-check-label" for="u-bahn-radio"><img src="assets/u/img.png" class="station-icon" alt="u-bahn-logo"></label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="lineSelection" id="s-bahn-radio" value="s-bahn">
+            <label class="form-check-label" for="s-bahn-radio"><img src="assets/s/img.png" class="station-icon" alt="u-bahn-logo"></label>
+          </div>
     </div>
     <div id="ui" class="container"></div>
     <div id="empty-box"></div>
