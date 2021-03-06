@@ -1,4 +1,5 @@
 /* global L, Swal*/
+import { ajax } from "./utilities.js";
 
 class Map {
     constructor() {
@@ -13,17 +14,17 @@ class Map {
     }
 
     init() {
-        this.map = L.map("map", {
+        this.Lmap = L.map("map", {
             center: [52.511, 13.411],
             zoom: 13
         });
 
         L.tileLayer(this.tileServerUrl, {
             attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors"
-        }).addTo(this.map);
+        }).addTo(this.Lmap);
 
-        this.map.on("click", (event) => this.onMapClick(event));
-        this.map.on("contextmenu", (event) => this.onMapRightClick(event));
+        this.Lmap.on("click", (event) => this.onMapClick(event));
+        this.Lmap.on("contextmenu", (event) => this.onMapRightClick(event));
     }
 
     get lineTypes() {
@@ -155,14 +156,14 @@ class Station {
         this.overlay = L.svgOverlay(svgElement, svgElementBounds, { interactive: true });
         this.overlay.on("click", event => this.map.onStationClick(event, this));
 
-        this.overlay.addTo(this.map.map);
+        this.overlay.addTo(this.map.Lmap);
     }
 
     generateMarker() {
         this.marker?.remove();
         this.marker = new L.marker(this.position, { opacity: 0.001 });
         this.marker.bindTooltip(this.name, { permanent: true, className: "station-name", offset: [0.0005, 0] });
-        this.marker.addTo(this.map.map);
+        this.marker.addTo(this.map.Lmap);
     }
 
     async getCrossingStationIcon() {
@@ -237,7 +238,7 @@ class Station {
     }
 
     restore() {
-        this.overlay.addTo(this.map.map);
+        this.overlay.addTo(this.map.Lmap);
         this.lines.forEach(line => line.addStationAtIndex(this, this.linePositions[line.id]));
         this.generateMarker();
     }
@@ -253,7 +254,7 @@ Station.stationId = 1;
 class Line {
     constructor(lineType) {
         this.id = Line.lineId++;
-        this.map = document.map.map;
+        this.map = document.map;
         this.stations = []; // First station is start, last is end
         this.lineType = lineType;
         this.name = this.initialName;
@@ -324,8 +325,8 @@ class Line {
         for(let i=0; i<stationCount; i++){
             this.stations[0].remove();
         }
-        if(document.map.line == this){
-            document.map.finishLine();
+        if(this.map.line == this){
+            this.map.finishLine();
         }
         document.ui.build();
     }
@@ -335,239 +336,10 @@ class Line {
     }
 
     redraw() {
-        this.getPolyLine().addTo(this.map);
+        this.getPolyLine().addTo(this.map.Lmap);
     }
 }
 
-function keyPress(e) {
-    if (e.keyCode == 90 && e.ctrlKey) {
-        document.undoManager.undo();
-    }
-    if (e.keyCode == 89 && e.ctrlKey) {
-        document.undoManager.redo();
-    }
-}
-document.onkeydown = keyPress;
-
-class UndoManager {
-    constructor() {
-        this.operations = [];
-        this.undoOperations = [];
-    }
-
-    push(operation) {
-        this.operations.push(operation);
-    }
-
-    pop() {
-        return this.operations.pop();
-    }
-
-    revert(operation) {
-        if (!operation || !operation.type) {
-            return;
-        }
-        let station = operation.station;
-        let line = operation.line;
-        switch (operation.type) {
-        case "create station":
-            station.remove();
-            break;
-        case "cross station":
-            station.removeCross(operation.line);
-            break;
-        case "rename station":
-            station.setName(operation.old);
-            break;
-        case "remove station":
-            station.restore();
-            break;
-        case "create circle":
-            operation.line.stations.pop();
-            operation.line.redraw();
-            break;
-        case "rename line":
-            line.setName(operation.old);
-            break;
-        case "remove line":
-            line.restore();
-            break;
-        }
-        document.ui.build();
-    }
-
-    undo() {
-        if (this.operations.length < 1) {
-            return true;
-        }
-        let previousOperation = this.pop();
-        this.revert(previousOperation);
-        this.undoOperations.push(previousOperation);
-    }
-
-    redo() {
-        if (this.undoOperations.length < 1) {
-            return;
-        }
-        let undidOperation = this.undoOperations.pop();
-        this.redoOperation(undidOperation);
-        this.operations.push(undidOperation);
-    }
-
-    redoOperation(operation) {
-        if (!operation || !operation.type) {
-            return;
-        }
-        let station = operation.station;
-        let line = operation.line;
-        switch (operation.type) {
-        case "create station":
-            station.restore();
-            break;
-        case "cross station":
-            station.restoreCross(operation.line, operation.index);
-            break;
-        case "rename station":
-            station.setName(operation.new);
-            break;
-        case "remove station":
-            station.remove();
-            break;
-        case "create circle":
-            operation.line.addStation(station);
-            operation.line.redraw();
-            break;
-        case "rename line":
-            line.setName(operation.new);
-            break;
-        case "remove line":
-            line.remove();
-            break;
-        }
-        document.ui.build();
-    }
-}
-
-document.undoManager = new UndoManager();
-
-function ajax(url) {
-    return new Promise(function (resolve, reject) {
-        var xhr = new XMLHttpRequest();
-        xhr.onload = function () {
-            resolve(this.responseText);
-        };
-        xhr.onerror = reject;
-        xhr.open("GET", url);
-        xhr.send();
-    });
-}
 Line.lineId = 1;
 
-class UI {
-    constructor(id) {
-        this.container = document.getElementById(id);
-        this.lineContainers = {};
-        this.stationContainers = {};
-        this.model = document.map;
-
-        this.initLineSelector();
-
-        this.build();
-    }
-
-    initLineSelector() {
-        document.getElementById("u-bahn-radio").onchange = () => document.map.selectLineType("u");
-        document.getElementById("s-bahn-radio").onchange = () => document.map.selectLineType("s");
-        document.getElementById("u-bahn-radio").checked = true;
-    }
-
-    build() {
-        this.container.innerHTML = "";
-        this.lineOverview = document.createElement("div");
-        this.lineOverview.classList.add("row");
-        this.container.appendChild(this.lineOverview);
-
-        this.model.lines.forEach(line => {
-            if (line.stations.length != 0) {
-                this.addLine(line);
-                line.stations.forEach(station => this.addStation(station, line));
-            }
-        });
-    }
-
-    addLine(line) {
-        const lineContainer = document.createElement("div");
-        const lineLabel = document.createElement("p");
-        lineLabel.classList.add("line-label");
-        lineLabel.innerHTML = line.name;
-
-        const lineHead = document.createElement("div");
-        lineHead.classList.add("form-inline", "container");
-        lineContainer.appendChild(lineHead);
-        lineHead.appendChild(lineLabel);
-
-        const lineRenameButton = document.createElement("button");
-        lineRenameButton.onclick = () => line.namePrompt();
-        lineRenameButton.title = "Rename line";
-        lineRenameButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
-        lineRenameButton.innerHTML = "<i class=\"fas fa-pen\"></i>";
-        lineHead.appendChild(lineRenameButton);
-
-        const lineDeletionButton = document.createElement("button");
-        lineDeletionButton.onclick = () => {
-            document.undoManager.push({type: "remove line", line});
-            line.remove();
-        };
-        lineDeletionButton.title = "Delete line";
-        lineDeletionButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
-        lineDeletionButton.innerHTML = "<i class=\"fas fa-trash\"></i>";
-        lineHead.appendChild(lineDeletionButton);
-
-        const lineContinueButton = document.createElement("button");
-        lineContinueButton.onclick = () => document.map.line = line;
-        lineContinueButton.title = "Continue line";
-        lineContinueButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
-        lineContinueButton.innerHTML = "<i class=\"far fa-arrow-alt-circle-right\"></i>";
-        lineHead.appendChild(lineContinueButton);
-
-        lineContainer.classList.add("line", "col");
-        this.lineOverview.appendChild(lineContainer);
-        this.lineContainers[line.id] = lineContainer;
-    }
-
-    addStation(station, line) {
-        const stationContainer = document.createElement("div");
-        stationContainer.classList.add("station-container", "container", "form-inline");
-        this.stationContainers[station.id] = stationContainer;
-
-        const stationLabel = document.createElement("label");
-        stationLabel.classList.add("station-label");
-        stationLabel.innerHTML = station.name;
-        stationContainer.appendChild(stationLabel);
-
-        const stationRenameButton = document.createElement("button");
-        stationRenameButton.onclick = () => station.namePrompt();
-        stationRenameButton.title = "Rename station";
-        stationRenameButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
-        stationRenameButton.innerHTML = "<i class=\"fas fa-pen\"></i>";
-        stationContainer.appendChild(stationRenameButton);
-
-        const stationDeleteButton = document.createElement("button");
-        stationDeleteButton.onclick = () => {
-            document.undoManager.push({type: "remove station", station});
-            station.remove();
-            document.ui.build();
-        };
-        stationDeleteButton.title = "Delete station";
-        stationDeleteButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
-        stationDeleteButton.innerHTML = "<i class=\"fas fa-trash\"></i>";
-        stationContainer.appendChild(stationDeleteButton);
-
-        this.lineContainers[line.id].appendChild(stationContainer);
-    }
-
-
-}
-
 document.map = new Map();
-document.ui = new UI("ui");
