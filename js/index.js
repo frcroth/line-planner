@@ -173,6 +173,10 @@ class Station {
         return this.map.cache.crossing;
     }
 
+    get isCross() {
+        return this.lines.length > 1;
+    }
+
     async addCross(line) {
         this.lines.push(line);
         if(line.lineType.id !== this.primaryLineType.id){
@@ -252,6 +256,7 @@ class Line {
         this.map = document.map.map;
         this.stations = []; // First station is start, last is end
         this.lineType = lineType;
+        this.name = this.initialName;
         this.polyline = L.polyline([], { color: this.lineType.color });
         
         document.ui.build();
@@ -285,8 +290,48 @@ class Line {
         return this.polyline;
     }
 
-    get name() {
+    get initialName() {
         return `${this.lineType.lineNamePrefix} ${this.id}`;
+    }
+
+    async namePrompt() {
+        const { value: name } = await Swal.fire({
+            title: "Enter Line name",
+            input: "text",
+            inputPlaceholder: this.name,
+            showCancelButton: true,
+            inputValidator: (value) => {
+                if (!value) {
+                    return "You need to write something!";
+                }
+            }
+        });
+
+        if (name) {
+            document.undoManager.push({ type: "rename line", line: this, old: this.name, new: name });
+            this.setName(name);
+        }
+    }
+
+    setName(name) {
+        this.name = name;
+        document.ui.build();
+    }
+
+    remove() {
+        this.previousStations = this.stations.slice();
+        const stationCount = this.stations.length;
+        for(let i=0; i<stationCount; i++){
+            this.stations[0].remove();
+        }
+        if(document.map.line == this){
+            document.map.finishLine();
+        }
+        document.ui.build();
+    }
+
+    restore() {
+        this.previousStations.forEach(station => station.restore());
     }
 
     redraw() {
@@ -323,6 +368,7 @@ class UndoManager {
             return;
         }
         let station = operation.station;
+        let line = operation.line;
         switch (operation.type) {
         case "create station":
             station.remove();
@@ -339,6 +385,12 @@ class UndoManager {
         case "create circle":
             operation.line.stations.pop();
             operation.line.redraw();
+            break;
+        case "rename line":
+            line.setName(operation.old);
+            break;
+        case "remove line":
+            line.restore();
             break;
         }
         document.ui.build();
@@ -367,6 +419,7 @@ class UndoManager {
             return;
         }
         let station = operation.station;
+        let line = operation.line;
         switch (operation.type) {
         case "create station":
             station.restore();
@@ -383,6 +436,12 @@ class UndoManager {
         case "create circle":
             operation.line.addStation(station);
             operation.line.redraw();
+            break;
+        case "rename line":
+            line.setName(operation.new);
+            break;
+        case "remove line":
+            line.remove();
             break;
         }
         document.ui.build();
@@ -438,9 +497,38 @@ class UI {
 
     addLine(line) {
         const lineContainer = document.createElement("div");
-        const lineDescription = document.createElement("h5");
-        lineDescription.innerHTML = line.name;
-        lineContainer.appendChild(lineDescription);
+        const lineLabel = document.createElement("p");
+        lineLabel.classList.add("line-label");
+        lineLabel.innerHTML = line.name;
+
+        const lineHead = document.createElement("div");
+        lineHead.classList.add("form-inline", "container");
+        lineContainer.appendChild(lineHead);
+        lineHead.appendChild(lineLabel);
+
+        const lineRenameButton = document.createElement("button");
+        lineRenameButton.onclick = () => line.namePrompt();
+        lineRenameButton.title = "Rename line";
+        lineRenameButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
+        lineRenameButton.innerHTML = "<i class=\"fas fa-pen\"></i>";
+        lineHead.appendChild(lineRenameButton);
+
+        const lineDeletionButton = document.createElement("button");
+        lineDeletionButton.onclick = () => {
+            document.undoManager.push({type: "remove line", line});
+            line.remove();
+        };
+        lineDeletionButton.title = "Delete line";
+        lineDeletionButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
+        lineDeletionButton.innerHTML = "<i class=\"fas fa-trash\"></i>";
+        lineHead.appendChild(lineDeletionButton);
+
+        const lineContinueButton = document.createElement("button");
+        lineContinueButton.onclick = () => document.map.line = line;
+        lineContinueButton.title = "Continue line";
+        lineContinueButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
+        lineContinueButton.innerHTML = "<i class=\"far fa-arrow-alt-circle-right\"></i>";
+        lineHead.appendChild(lineContinueButton);
 
         lineContainer.classList.add("line", "col");
         this.lineOverview.appendChild(lineContainer);
@@ -459,6 +547,7 @@ class UI {
 
         const stationRenameButton = document.createElement("button");
         stationRenameButton.onclick = () => station.namePrompt();
+        stationRenameButton.title = "Rename station";
         stationRenameButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
         stationRenameButton.innerHTML = "<i class=\"fas fa-pen\"></i>";
         stationContainer.appendChild(stationRenameButton);
@@ -469,6 +558,7 @@ class UI {
             station.remove();
             document.ui.build();
         };
+        stationDeleteButton.title = "Delete station";
         stationDeleteButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
         stationDeleteButton.innerHTML = "<i class=\"fas fa-trash\"></i>";
         stationContainer.appendChild(stationDeleteButton);
