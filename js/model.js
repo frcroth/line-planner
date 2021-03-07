@@ -101,6 +101,86 @@ class Map {
 
         document.undoManager.push({ type: "create station", station });
     }
+
+    get stations() {
+        let stations = [];
+        this.lines.forEach(line => line.stations.forEach(station => {
+            if(!stations.some(s => s.id == station.id) && station){
+                stations.push(station);
+            }
+        }));
+        return stations;
+    }
+
+    export() {
+        let serialization = { stations: [], lines: []};
+
+        this.stations.forEach(station => 
+            serialization.stations.push({
+                id: station.id,
+                position: station.position,
+                name: station.name,
+                lines: station.lines.map(l => l.id)
+            })
+        );
+
+        this.lines.forEach(line => 
+            serialization.lines.push({
+                id: line.id,
+                stations: line.stations.map(s => s.id),
+                lineType : line.lineType.id,
+                name: line.name
+            })
+        );
+
+        return JSON.stringify(serialization);
+    }
+
+    getLineById(id) {
+        return this.lines.find(line => line.id === id);
+    }
+
+    getStationById(id) {
+        return this.stations.find(station => station.id === id);
+    }
+
+    import(serializationJSON) {
+        this._importing = true;
+        const serialization = JSON.parse(serializationJSON);
+
+        serialization.lines.forEach(line => {
+            this.line = new Line(this.lineTypes[line.lineType]);
+            this.lines.push(this.line);
+            this.line.id = line.id;
+            this.line.setName(line.name);
+        });
+
+        const newStations = [];
+
+        serialization.stations.forEach(station => {
+            let newStation = new Station(station.position, this.getLineById(station.lines.splice(0,1)[0]));
+            newStation.name = station.name;
+            newStation.id = station.id;
+            station.lines.forEach(lineId => {
+                let line = this.getLineById(lineId);
+                newStation.lines.push(line);
+            });
+            newStations.push(newStation);
+        });
+
+        serialization.lines.forEach(line => {
+            this.line = this.getLineById(line.id);
+            this.line.stations = [];
+            console.log(line.stations);
+            this.line.stations = line.stations.map(stationId => newStations.find(s => s.id === stationId));
+            this.line.redraw();
+        });
+
+        this.stations.forEach(s => s.redrawOverlay());
+        this.finishLine();
+        document.ui.build();
+        this._importing = false;
+    }
 }
 
 class Station {
@@ -112,7 +192,10 @@ class Station {
         line.addStation(this);
         this.lines = [line];
 
-        this.createOverlay();
+        if(!this.map._importing){
+            this.createOverlay();
+        }
+        
         this.generateMarker();
 
         document.ui.build();
@@ -181,9 +264,13 @@ class Station {
     async addCross(line) {
         this.lines.push(line);
         if(line.lineType.id !== this.primaryLineType.id){
-            this.overlay.remove();
-            this.createOverlay(true);
+            this.redrawOverlay();
         }
+    }
+
+    redrawOverlay(){
+        this.overlay?.remove();
+        this.createOverlay(this.isCross);
     }
 
     getInitialName() {
@@ -269,7 +356,9 @@ class Line {
 
     addStationAtIndex(station, index) {
         this.stations.splice(index, 0, station);
-        this.redraw();
+        if(!this.map._importing){
+            this.redraw();
+        }
     }
 
     removeStation(station) {
