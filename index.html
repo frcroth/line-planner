@@ -35,7 +35,25 @@
 <body>
     <div class="container">
         <h1>Line planner</h1>
-        <p>Draw lines on a map.</p>
+        <div class="row">
+            <div class="col-3 container">
+                <p>Draw lines on a map.</p>
+            </div>
+            <div class="col-4"></div>
+            <div class="col-5 container">
+                <div class="row">
+                    <div class="col-3">
+                        <button class="btn btn-outline-secondary" id="import-button">Import</button>
+                    </div>
+                    <div class="col-6">
+                        <input class="form-control-file" id="upload-input" type="file" name="uploadedFile">
+                    </div>
+                    <div class="col-3">
+                        <button class="btn btn-outline-secondary" id="export-button">Export</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <div id="map">
     </div>
@@ -60,6 +78,7 @@
                 alt="Link to repo">Source</a>
         </div>
     </footer>
+    <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script>
     <script type="module" src="js/utilities.js"></script>
     <script type="module" src="js/model.js"></script>
     <script src="js/ui.js"></script>

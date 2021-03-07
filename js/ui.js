@@ -1,4 +1,4 @@
-
+/* global Swal, saveAs*/
 class UI {
     constructor(id) {
         this.container = document.getElementById(id);
@@ -7,6 +7,7 @@ class UI {
         this.model = document.map;
 
         this.initLineSelector();
+        this.initImportExport();
     }
 
     initLineSelector() {
@@ -15,14 +16,43 @@ class UI {
         document.getElementById("u-bahn-radio").checked = true;
     }
 
+    initImportExport() {
+        this.importButton = document.getElementById("import-button");
+        this.importButton.onclick = () => this.import();
+        this.upload = document.getElementById("upload-input");
+        this.exportButton = document.getElementById("export-button");
+        this.exportButton.onclick = () => this.export();
+    }
+
+    import() {
+        if (this.upload.files.length < 1) {
+            Swal.fire("No file specified");
+            return;
+        }
+        const selectedFile = this.upload.files[0];
+
+        selectedFile.text().then(text => document.map.import(text));
+    }
+
+    export() {
+        let content = this.model.export();
+        let filename = "lines.json";
+
+        let blob = new Blob([content], {
+            type: "text/plain;charset=utf-8"
+        });
+
+        saveAs(blob, filename);
+    }
+
     build() {
         this.container.innerHTML = "";
         this.lineOverview = document.createElement("div");
         this.lineOverview.classList.add("row");
         this.container.appendChild(this.lineOverview);
 
-        if(!this.model ){
-            if(!document.map){
+        if (!this.model) {
+            if (!document.map) {
                 return;
             }
             this.model = document.map;
@@ -55,7 +85,7 @@ class UI {
 
         const lineDeletionButton = document.createElement("button");
         lineDeletionButton.onclick = () => {
-            document.undoManager.push({type: "remove line", line});
+            document.undoManager.push({ type: "remove line", line });
             line.remove();
         };
         lineDeletionButton.title = "Delete line";
@@ -94,7 +124,7 @@ class UI {
 
         const stationDeleteButton = document.createElement("button");
         stationDeleteButton.onclick = () => {
-            document.undoManager.push({type: "remove station", station});
+            document.undoManager.push({ type: "remove station", station });
             station.remove();
             document.ui.build();
         };
