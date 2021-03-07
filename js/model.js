@@ -184,12 +184,14 @@ class Map {
 }
 
 class Station {
-    constructor(position, line) {
+    constructor(position, line, options = {}) {
         this.id = Station.stationId++;
         this.map = document.map;
         this.position = position;
         this.name = this.getInitialName();
-        line.addStation(this);
+        if(!options.doNotAddToLine){
+            line.addStation(this);
+        }
         this.lines = [line];
 
         if(!this.map._importing){
@@ -346,6 +348,7 @@ class Line {
         this.lineType = lineType;
         this.name = this.initialName;
         this.polyline = L.polyline([], { color: this.lineType.color });
+        this.polyline.on("click", event => this.onClick(event));
         
         document.ui.build();
     }
@@ -382,6 +385,40 @@ class Line {
 
     get initialName() {
         return `${this.lineType.lineNamePrefix} ${this.id}`;
+    }
+
+    isPointBetweenPoints(a, b, c) {
+        const epsilon = 20;
+        const lineDist = this.map.Lmap.distance(a,b);
+        const distancePoint = this.map.Lmap.distance(a, c) + this.map.Lmap.distance(b, c);
+        if (lineDist + epsilon > distancePoint && lineDist - epsilon < distancePoint){
+            return true;
+        }
+        return false;
+    }
+
+    getStationsNextToPoint(point) {
+        for(let i=1; i<this.stations.length;i++) {
+            let a = this.stations[i-1].position;
+            let b = this.stations[i].position;
+            if(this.isPointBetweenPoints(a, b, point)){
+                return { index: i};
+            }
+        }
+    }
+
+    onClick(evt) {
+        L.DomEvent.stopPropagation(evt);
+
+        // Add station by clicking between stations
+        let { index } = this.getStationsNextToPoint(evt.latlng);
+        if(!index){
+            return;
+        }
+        let station = new Station(evt.latlng, this, { doNotAddToLine: true});
+        this.addStationAtIndex(station, index);
+        document.undoManager.push({ type: "create station", station });
+        document.ui.build();
     }
 
     async namePrompt() {
