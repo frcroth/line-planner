@@ -7,15 +7,27 @@ class Map {
         this.cache = {};
         this.lines = [];
         this.currentLineType = this.lineTypes["u"];
+        this._initialized = true;
     }
 
     get tileServerUrl() {
         return "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png";
     }
 
+    readCenter() {
+        let center = localStorage.getItem("map-center");
+        if(!center){
+            return [52.511, 13.411]; // Default: Berlin
+        }
+        
+        return [Number.parseFloat(center.split("(")[1].split(",")[0]),
+            Number.parseFloat(center.split(" ")[1].split(")")[0])];
+    }
+
+
     init() {
         this.Lmap = L.map("map", {
-            center: [52.511, 13.411],
+            center: this.readCenter(),
             zoom: 13
         });
 
@@ -25,6 +37,7 @@ class Map {
 
         this.Lmap.on("click", (event) => this.onMapClick(event));
         this.Lmap.on("contextmenu", (event) => this.onMapRightClick(event));
+        this.Lmap.on("moveend", () => this.onMapMove());
     }
 
     get lineTypes() {
@@ -49,6 +62,12 @@ class Map {
     selectLineType(lineType){
         this.currentLineType = this.lineTypes[lineType];
         this.finishLine();
+    }
+
+    onMapMove() {
+        if(this._initialized){
+            localStorage.setItem("map-center", this.Lmap.getCenter());
+        }
     }
 
     onMapClick(event) {
