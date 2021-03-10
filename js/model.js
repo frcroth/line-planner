@@ -167,33 +167,40 @@ class Map {
         this._importing = true;
         const serialization = JSON.parse(serializationJSON);
 
+        const maxLineIdBefore = Line.lineId;
+        const maxStationIdBefore = Station.stationId;
+        const lineIdTransform = id => Number(id) + maxLineIdBefore;
+        const stationIdTransform = id => Number(id) + maxStationIdBefore;
+
         serialization.lines.forEach(line => {
             this.line = new Line(this.lineTypes[line.lineType]);
             this.lines.push(this.line);
-            this.line.id = line.id;
+            this.line.id = lineIdTransform(line.id);
             this.line.setName(line.name);
         });
 
         const newStations = [];
 
         serialization.stations.forEach(station => {
-            let newStation = new Station(station.position, this.getLineById(station.lines.splice(0,1)[0]));
+            let newStation = new Station(station.position, this.getLineById(lineIdTransform(station.lines.splice(0,1)[0])));
             newStation.name = station.name;
-            newStation.id = station.id;
+            newStation.id = stationIdTransform(station.id);
             station.lines.forEach(lineId => {
-                let line = this.getLineById(lineId);
+                let line = this.getLineById(lineIdTransform(lineId));
                 newStation.lines.push(line);
             });
             newStations.push(newStation);
         });
 
         serialization.lines.forEach(line => {
-            this.line = this.getLineById(line.id);
+            this.line = this.getLineById(lineIdTransform(line.id)) ;
             this.line.stations = [];
-            console.log(line.stations);
-            this.line.stations = line.stations.map(stationId => newStations.find(s => s.id === stationId));
+            this.line.stations = line.stations.map(stationId => newStations.find(s => s.id === stationIdTransform(stationId)));
             this.line.redraw();
         });
+
+        Line.lineId = Math.max(...this.lines.map(line => line.id)) + 1;
+        Station.stationId = Math.max(...this.stations.map(station => station.id)) + 1;
 
         this.stations.forEach(s => s.redrawOverlay());
         this.finishLine();
