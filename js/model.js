@@ -273,7 +273,7 @@ class Station {
     generateMarker() {
         this.marker?.remove();
         this.marker = new L.marker(this.position, { opacity: 0.001 });
-        this.marker.bindTooltip(this.name, { permanent: true, className: "station-name", offset: [0.0005, 0] });
+        this.marker.bindTooltip(this.name, { permanent: true, className: "station-name station-name-" + this.primaryLineType.id, offset: [0.0005, 0] });
         this.marker.addTo(this.map.Lmap);
     }
 

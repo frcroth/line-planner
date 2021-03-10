@@ -9,8 +9,15 @@
     }
 }
 
-.station-name {
+.station-name-u {
     color: #115d91 !important;
+}
+
+.station-name-s {
+    color: #008e4e !important;
+}
+
+.station-name {
     font-size: 1.2em;
     background-color: transparent !important;
     border-width: 0px !important;
