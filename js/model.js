@@ -225,6 +225,9 @@ class Station {
         }
         
         this.generateMarker();
+        if(this.map.useReverseGeocode){
+            this.setBetterName();
+        }        
 
         document.ui.build();
     }
@@ -307,6 +310,36 @@ class Station {
         // 2. Create a generic name with a number
         // 3. Get a name from the geolocation
         return "Station " + this.id;
+    }
+
+    async setBetterName(){
+        this.setName(await this.getReverseGeocode());
+    }
+
+    reverseGeocodeURL(){
+        return `https://nominatim.openstreetmap.org/reverse?lat=${this.position.lat}&lon=${this.position.lng}&format=json`;
+    }
+
+    get interestingAddressParts() {
+        return ["road", "leisure", "quarter", "tourism", "neighborhood"];
+    }
+
+    async clientRequestThrottling(){
+        if(!this.lastGeocodeRequestDate){
+            this.lastGeocodeRequestDate = Date.now();
+        }
+        this.lastGeocodeRequestDate = this.lastGeocodeRequestDate + 1000;
+        return new Promise(resolve => setTimeout(resolve, this.lastGeocodeRequestDate - Date.now()));
+    }
+
+    async getReverseGeocode() {
+        await this.clientRequestThrottling();
+        let response = await ajax(this.reverseGeocodeURL());
+        const responseObject = JSON.parse(response);
+        let addressParts = Object.entries(responseObject["address"]);
+        let possibleNames = addressParts.filter(addressPart => this.interestingAddressParts.includes(addressPart[0])).map(addressPart => addressPart[1]);
+        
+        return possibleNames[Math.floor(Math.random() * possibleNames.length)];
     }
 
 

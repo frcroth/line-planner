@@ -51,3 +51,13 @@
 .station-icon {
     height: 20px;
 }
+
+.tooltip {
+    background-color: #FFFFFF;
+    color: #000000;
+    text-decoration: none
+}
+
+.small-desc {
+    font-size: 0.8em;
+}

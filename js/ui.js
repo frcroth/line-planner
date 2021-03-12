@@ -8,6 +8,7 @@ class UI {
 
         this.initLineSelector();
         this.initImportExport();
+        this.initReverseGeocode();
     }
 
     initLineSelector() {
@@ -22,6 +23,12 @@ class UI {
         this.upload = document.getElementById("upload-input");
         this.exportButton = document.getElementById("export-button");
         this.exportButton.onclick = () => this.export();
+    }
+
+    initReverseGeocode() {
+        this.reverseGeocodeBox = document.getElementById("reverse-geocode");
+        this.reverseGeocodeBox.checked = false;
+        this.reverseGeocodeBox.onchange = () => document.map.useReverseGeocode = this.reverseGeocodeBox.checked;
     }
 
     import() {
