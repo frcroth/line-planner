@@ -329,6 +329,12 @@ class Station {
         }
     }
 
+    refreshGraphics() {
+        this.redrawOverlay();
+        this.lines.forEach(line => line.redraw());
+        this.generateMarker();
+    }
+
     redrawOverlay() {
         this.overlay?.remove();
         this.createOverlay(this.isCrossOfDifferentLines);
@@ -468,6 +474,13 @@ class Line {
         return this.polyline;
     }
 
+    reAddPolyLine() {
+        this.polyline?.remove();
+        this.polyline = L.polyline([], { color: this.lineType.color });
+        this.polyline.on("click", event => this.onClick(event));
+        this.redraw();
+    }
+
     get initialName() {
         return `${this.lineType.lineNamePrefix} ${this.id}`;
     }
@@ -504,6 +517,24 @@ class Line {
         this.addStationAtIndex(station, index);
         document.undoManager.push({ type: "create station", station });
         document.ui.build();
+    }
+
+    async changeLineType() {
+        const { value: lineTypeIndex } = await Swal.fire({
+            title: "Select line type",
+            input: "select",
+            inputOptions: Object.values(this.map.lineTypes).map(lineType => lineType.name),
+            inputPlaceholder: this.lineType.name,
+            showCancelButton: true,
+        });
+
+        if (lineTypeIndex) {
+            let newLineType = Object.values(this.map.lineTypes)[lineTypeIndex];
+            document.undoManager.push({ type: "change line type", line: this, old: this.lineType.id, new: newLineType.id});
+            this.lineType = newLineType;
+            this.stations.forEach(station => station.refreshGraphics());
+            this.reAddPolyLine();
+        }
     }
 
     async namePrompt() {

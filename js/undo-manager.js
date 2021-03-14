@@ -44,9 +44,7 @@ class UndoManager {
             break;
         case "move station":
             station.position = operation.old;
-            station.redrawOverlay();
-            station.lines.forEach(line => line.redraw());
-            station.generateMarker();
+            station.refreshGraphics();
             break;
         case "create circle":
             operation.line.stations.pop();
@@ -57,6 +55,11 @@ class UndoManager {
             break;
         case "remove line":
             line.restore();
+            break;
+        case "change line type":
+            line.lineType = line.map.lineTypes[operation.old];
+            line.stations.forEach(station => station.refreshGraphics());
+            line.reAddPolyLine();
             break;
         }
         document.ui.build();
@@ -101,9 +104,7 @@ class UndoManager {
             break;
         case "move station":
             station.position = operation.new;
-            station.redrawOverlay();
-            station.lines.forEach(line => line.redraw());
-            station.generateMarker();
+            station.refreshGraphics();
             break;
         case "create circle":
             operation.line.addStation(station);
@@ -114,6 +115,11 @@ class UndoManager {
             break;
         case "remove line":
             line.remove();
+            break;
+        case "change line type":
+            line.lineType = line.map.lineTypes[operation.new];
+            line.stations.forEach(station => station.refreshGraphics());
+            line.reAddPolyLine();
             break;
         }
         document.ui.build();

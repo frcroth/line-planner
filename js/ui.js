@@ -107,6 +107,13 @@ class UI {
         lineContinueButton.innerHTML = "<i class=\"far fa-arrow-alt-circle-right\"></i>";
         lineHead.appendChild(lineContinueButton);
 
+        const lineTypeChangeButton = document.createElement("button");
+        lineTypeChangeButton.onclick = () => line.changeLineType();
+        lineTypeChangeButton.title = "Change line type";
+        lineTypeChangeButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
+        lineTypeChangeButton.innerHTML = "<i class=\"fas fa-exchange-alt\"></i>";
+        lineHead.appendChild(lineTypeChangeButton);
+
         lineContainer.classList.add("line", "col");
         this.lineOverview.appendChild(lineContainer);
         this.lineContainers[line.id] = lineContainer;
