@@ -281,6 +281,10 @@ class Station {
         this.dragHandle = new L.Draggable(this.overlay._image);
         this.dragHandle.enable();
 
+        this.dragHandle.on("dragstart", () => {
+            this._preDragPosition = this.position;
+        });
+
         this.dragHandle.on("drag", (e) => {
             let layerPosition = e.target._newPos;
             let newPosition = document.map.Lmap.layerPointToLatLng(layerPosition);
@@ -289,7 +293,10 @@ class Station {
             this.lines.forEach(line => line.redraw());
         });
 
-        this.dragHandle.on("dragend", () => this.generateMarker());
+        this.dragHandle.on("dragend", () => {
+            this.generateMarker();
+            document.undoManager.push({ type: "move station", station: this, old: this._preDragPosition, new: this.position });
+        });
     }
 
     generateMarker() {
@@ -328,10 +335,6 @@ class Station {
     }
 
     getInitialName() {
-        // Possible solutions:
-        // 1. Create a plausible random name
-        // 2. Create a generic name with a number
-        // 3. Get a name from the geolocation
         return "Station " + this.id;
     }
 

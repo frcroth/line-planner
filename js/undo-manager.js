@@ -42,6 +42,12 @@ class UndoManager {
         case "remove station":
             station.restore();
             break;
+        case "move station":
+            station.position = operation.old;
+            station.redrawOverlay();
+            station.lines.forEach(line => line.redraw());
+            station.generateMarker();
+            break;
         case "create circle":
             operation.line.stations.pop();
             operation.line.redraw();
@@ -92,6 +98,12 @@ class UndoManager {
             break;
         case "remove station":
             station.remove();
+            break;
+        case "move station":
+            station.position = operation.new;
+            station.redrawOverlay();
+            station.lines.forEach(line => line.redraw());
+            station.generateMarker();
             break;
         case "create circle":
             operation.line.addStation(station);
