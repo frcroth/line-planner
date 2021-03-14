@@ -1,0 +1,562 @@
+{
+    "stations": [
+        {
+            "id": 1,
+            "position": {
+                "lat": 52.50937805280756,
+                "lng": 13.272171020507814
+            },
+            "name": "Theodor-Heuss-Platz",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 2,
+            "position": {
+                "lat": 52.50624358505761,
+                "lng": 13.279895782470705
+            },
+            "name": "ICC",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 3,
+            "position": {
+                "lat": 52.50065322945206,
+                "lng": 13.284058570861818
+            },
+            "name": "Westkreuz",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 4,
+            "position": {
+                "lat": 52.497910037971444,
+                "lng": 13.296160697937013
+            },
+            "name": "Joachim-Friedrich-Straße",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 5,
+            "position": {
+                "lat": 52.499895603198766,
+                "lng": 13.306889533996584
+            },
+            "name": "Adenauerplatz",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 6,
+            "position": {
+                "lat": 52.501149598194075,
+                "lng": 13.316802978515627
+            },
+            "name": "Schlüterstraße",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 7,
+            "position": {
+                "lat": 52.5029521533361,
+                "lng": 13.32671642303467
+            },
+            "name": "Uhlandstraße",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 8,
+            "position": {
+                "lat": 52.50378809585129,
+                "lng": 13.33139419555664
+            },
+            "name": "Kurfürstendamm",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 9,
+            "position": {
+                "lat": 52.50180270642149,
+                "lng": 13.343238830566408
+            },
+            "name": "Wittenbergplatz",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 10,
+            "position": {
+                "lat": 52.50415381570302,
+                "lng": 13.359804153442385
+            },
+            "name": "Genthiner Straße",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 11,
+            "position": {
+                "lat": 52.50741903665947,
+                "lng": 13.369030952453615
+            },
+            "name": "Kulturforum",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 12,
+            "position": {
+                "lat": 52.50940417243301,
+                "lng": 13.376498222351074
+            },
+            "name": "Potsdamer Platz",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 13,
+            "position": {
+                "lat": 52.51026611136366,
+                "lng": 13.389716148376465
+            },
+            "name": "Stadtmitte",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 14,
+            "position": {
+                "lat": 52.51086684668216,
+                "lng": 13.396797180175783
+            },
+            "name": "Jerusalemer Straße",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 15,
+            "position": {
+                "lat": 52.51368758097843,
+                "lng": 13.405466079711914
+            },
+            "name": "Gertraudenstraße",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 16,
+            "position": {
+                "lat": 52.518727886767266,
+                "lng": 13.408126831054688
+            },
+            "name": "Berliner Rathaus",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 17,
+            "position": {
+                "lat": 52.521482835423015,
+                "lng": 13.411195278167726
+            },
+            "name": "Alexanderplatz",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 18,
+            "position": {
+                "lat": 52.52502092837302,
+                "lng": 13.419928550720217
+            },
+            "name": "Mollstraße",
+            "lines": [
+                1,
+                2
+            ]
+        },
+        {
+            "id": 19,
+            "position": {
+                "lat": 52.53130001521475,
+                "lng": 13.427460193634035
+            },
+            "name": "Immanuelkirchstraße",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 20,
+            "position": {
+                "lat": 52.534354381528146,
+                "lng": 13.43080759048462
+            },
+            "name": "Pasteurstraße",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 21,
+            "position": {
+                "lat": 52.540606032944865,
+                "lng": 13.438038825988771
+            },
+            "name": "Greifswalder Straße",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 22,
+            "position": {
+                "lat": 52.5454475144891,
+                "lng": 13.444712162017824
+            },
+            "name": "Ostseestraße",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 23,
+            "position": {
+                "lat": 52.548305173445875,
+                "lng": 13.451106548309328
+            },
+            "name": "Antonplatz",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 24,
+            "position": {
+                "lat": 52.55377204809563,
+                "lng": 13.46754312515259
+            },
+            "name": "Buschallee",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 25,
+            "position": {
+                "lat": 52.556857465439165,
+                "lng": 13.4669691324234
+            },
+            "name": "Rathaus Weißensee",
+            "lines": [
+                1
+            ]
+        },
+        {
+            "id": 26,
+            "position": {
+                "lat": 52.525047038700784,
+                "lng": 13.36967468261719
+            },
+            "name": "Hauptbahnhof",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 27,
+            "position": {
+                "lat": 52.528532628116686,
+                "lng": 13.376197814941408
+            },
+            "name": "Invalidenpark",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 28,
+            "position": {
+                "lat": 52.53049070306776,
+                "lng": 13.383021354675295
+            },
+            "name": "Naturkundemuseum",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 29,
+            "position": {
+                "lat": 52.531717718874475,
+                "lng": 13.38857889175415
+            },
+            "name": "Nordbahnhof",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 30,
+            "position": {
+                "lat": 52.5296422146409,
+                "lng": 13.401153087615969
+            },
+            "name": "Rosenthaler Platz",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 31,
+            "position": {
+                "lat": 52.52865011507562,
+                "lng": 13.41010093688965
+            },
+            "name": "Rosa-Luxemburg-Platz",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 32,
+            "position": {
+                "lat": 52.523193166859144,
+                "lng": 13.432717323303224
+            },
+            "name": "Platz der Vereinten Nationen",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 33,
+            "position": {
+                "lat": 52.52485121086412,
+                "lng": 13.442373275756838
+            },
+            "name": "Langenbeckstraße",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 34,
+            "position": {
+                "lat": 52.52834987000028,
+                "lng": 13.455483913421633
+            },
+            "name": "Landsberger Allee",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 35,
+            "position": {
+                "lat": 52.53136528167348,
+                "lng": 13.468894958496096
+            },
+            "name": "Franz-Jacob-Straße",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 36,
+            "position": {
+                "lat": 52.532931647583354,
+                "lng": 13.476233482360842
+            },
+            "name": "Weißenseer Weg",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 37,
+            "position": {
+                "lat": 52.53358428355608,
+                "lng": 13.48498821258545
+            },
+            "name": "Vulkanstraße",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 38,
+            "position": {
+                "lat": 52.5341847000842,
+                "lng": 13.497133255004885
+            },
+            "name": "Gensierstraße",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 39,
+            "position": {
+                "lat": 52.53470679473965,
+                "lng": 13.506317138671875
+            },
+            "name": "Arendsweg",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 40,
+            "position": {
+                "lat": 52.535254987446734,
+                "lng": 13.517346382141115
+            },
+            "name": "Rhinstraße",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 41,
+            "position": {
+                "lat": 52.53815246377623,
+                "lng": 13.530821800231935
+            },
+            "name": "Bürknersfelde",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 42,
+            "position": {
+                "lat": 52.54256356957093,
+                "lng": 13.541378974914553
+            },
+            "name": "Marzahn",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 43,
+            "position": {
+                "lat": 52.54365975195305,
+                "lng": 13.552258014678957
+            },
+            "name": "Marzahner Promenade",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 44,
+            "position": {
+                "lat": 52.54606081770838,
+                "lng": 13.571248054504396
+            },
+            "name": "Blumberger Damm",
+            "lines": [
+                2
+            ]
+        },
+        {
+            "id": 45,
+            "position": {
+                "lat": 52.555037552067176,
+                "lng": 13.57438087463379
+            },
+            "name": "Glambecker Weg",
+            "lines": [
+                2
+            ]
+        }
+    ],
+    "lines": [
+        {
+            "id": 1,
+            "stations": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25
+            ],
+            "lineType": "u",
+            "name": "U 3"
+        },
+        {
+            "id": 2,
+            "stations": [
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                18,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45
+            ],
+            "lineType": "u",
+            "name": "U 11"
+        }
+    ]
+}

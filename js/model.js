@@ -202,7 +202,10 @@ class Map {
         Line.lineId = Math.max(...this.lines.map(line => line.id)) + 1;
         Station.stationId = Math.max(...this.stations.map(station => station.id)) + 1;
 
-        this.stations.forEach(s => s.redrawOverlay());
+        this.stations.forEach(s => {
+            s.redrawOverlay();
+            s.generateMarker();
+        });
         this.finishLine();
         document.ui.build();
         this._importing = false;
