@@ -16,10 +16,10 @@ class Map {
 
     readCenter() {
         let center = localStorage.getItem("map-center");
-        if(!center){
+        if (!center) {
             return [52.511, 13.411]; // Default: Berlin
         }
-        
+
         return [Number.parseFloat(center.split("(")[1].split(",")[0]),
             Number.parseFloat(center.split(" ")[1].split(")")[0])];
     }
@@ -42,30 +42,30 @@ class Map {
 
     get lineTypes() {
         return {
-            u : {
-                id : "u",
-                name : "U-Bahn",
+            u: {
+                id: "u",
+                name: "U-Bahn",
                 icon: "assets/u/station.svg",
                 color: "#115D91",
                 lineNamePrefix: "U"
             },
-            s : {
-                id : "s",
-                name : "S-Bahn",
-                icon : "assets/s/station.svg",
+            s: {
+                id: "s",
+                name: "S-Bahn",
+                icon: "assets/s/station.svg",
                 color: "#008e4e",
-                lineNamePrefix : "S"
+                lineNamePrefix: "S"
             }
         };
     }
 
-    selectLineType(lineType){
+    selectLineType(lineType) {
         this.currentLineType = this.lineTypes[lineType];
         this.finishLine();
     }
 
     onMapMove() {
-        if(this._initialized){
+        if (this._initialized) {
             localStorage.setItem("map-center", this.Lmap.getCenter());
         }
     }
@@ -124,7 +124,7 @@ class Map {
     get stations() {
         let stations = [];
         this.lines.forEach(line => line.stations.forEach(station => {
-            if(!stations.some(s => s.id == station.id) && station){
+            if (!stations.some(s => s.id == station.id) && station) {
                 stations.push(station);
             }
         }));
@@ -132,9 +132,9 @@ class Map {
     }
 
     export() {
-        let serialization = { stations: [], lines: []};
+        let serialization = { stations: [], lines: [] };
 
-        this.stations.forEach(station => 
+        this.stations.forEach(station =>
             serialization.stations.push({
                 id: station.id,
                 position: station.position,
@@ -143,11 +143,11 @@ class Map {
             })
         );
 
-        this.lines.forEach(line => 
+        this.lines.forEach(line =>
             serialization.lines.push({
                 id: line.id,
                 stations: line.stations.map(s => s.id),
-                lineType : line.lineType.id,
+                lineType: line.lineType.id,
                 name: line.name
             })
         );
@@ -182,7 +182,7 @@ class Map {
         const newStations = [];
 
         serialization.stations.forEach(station => {
-            let newStation = new Station(station.position, this.getLineById(lineIdTransform(station.lines.splice(0,1)[0])));
+            let newStation = new Station(station.position, this.getLineById(lineIdTransform(station.lines.splice(0, 1)[0])));
             newStation.name = station.name;
             newStation.id = stationIdTransform(station.id);
             station.lines.forEach(lineId => {
@@ -193,7 +193,7 @@ class Map {
         });
 
         serialization.lines.forEach(line => {
-            this.line = this.getLineById(lineIdTransform(line.id)) ;
+            this.line = this.getLineById(lineIdTransform(line.id));
             this.line.stations = [];
             this.line.stations = line.stations.map(stationId => newStations.find(s => s.id === stationIdTransform(stationId)));
             this.line.redraw();
@@ -215,19 +215,19 @@ class Station {
         this.map = document.map;
         this.position = position;
         this.name = this.getInitialName();
-        if(!options.doNotAddToLine){
+        if (!options.doNotAddToLine) {
             line.addStation(this);
         }
         this.lines = [line];
 
-        if(!this.map._importing){
+        if (!this.map._importing) {
             this.createOverlay();
         }
-        
+
         this.generateMarker();
-        if(this.map.useReverseGeocode){
+        if (this.map.useReverseGeocode) {
             this.setBetterName();
-        }        
+        }
 
         document.ui.build();
     }
@@ -271,6 +271,22 @@ class Station {
         this.overlay.on("click", event => this.map.onStationClick(event, this));
 
         this.overlay.addTo(this.map.Lmap);
+        this.initDraggable();
+    }
+
+    initDraggable() {
+        this.dragHandle = new L.Draggable(this.overlay._image);
+        this.dragHandle.enable();
+
+        this.dragHandle.on("drag", (e) => {
+            let layerPosition = e.target._newPos;
+            let newPosition = document.map.Lmap.layerPointToLatLng(layerPosition);
+            this.position = newPosition;
+            this.redrawOverlay();
+            this.lines.forEach(line => line.redraw());
+        });
+
+        this.dragHandle.on("dragend", () => this.generateMarker());
     }
 
     generateMarker() {
@@ -292,16 +308,20 @@ class Station {
         return this.lines.length > 1;
     }
 
+    get isCrossOfDifferentLines() {
+        return this.lines.filter(line => line.lineType.id != this.primaryLineType.id).length > 0;
+    }
+
     async addCross(line) {
         this.lines.push(line);
-        if(line.lineType.id !== this.primaryLineType.id){
+        if (line.lineType.id !== this.primaryLineType.id) {
             this.redrawOverlay();
         }
     }
 
-    redrawOverlay(){
+    redrawOverlay() {
         this.overlay?.remove();
-        this.createOverlay(this.isCross);
+        this.createOverlay(this.isCrossOfDifferentLines);
     }
 
     getInitialName() {
@@ -312,11 +332,11 @@ class Station {
         return "Station " + this.id;
     }
 
-    async setBetterName(){
+    async setBetterName() {
         this.setName(await this.getReverseGeocode());
     }
 
-    reverseGeocodeURL(){
+    reverseGeocodeURL() {
         return `https://nominatim.openstreetmap.org/reverse?lat=${this.position.lat}&lon=${this.position.lng}&format=json`;
     }
 
@@ -324,8 +344,8 @@ class Station {
         return ["road", "leisure", "quarter", "tourism", "neighborhood"];
     }
 
-    async clientRequestThrottling(){
-        if(!this.lastGeocodeRequestDate){
+    async clientRequestThrottling() {
+        if (!this.lastGeocodeRequestDate) {
             this.lastGeocodeRequestDate = Date.now();
         }
         this.lastGeocodeRequestDate = this.lastGeocodeRequestDate + 1000;
@@ -338,7 +358,7 @@ class Station {
         const responseObject = JSON.parse(response);
         let addressParts = Object.entries(responseObject["address"]);
         let possibleNames = addressParts.filter(addressPart => this.interestingAddressParts.includes(addressPart[0])).map(addressPart => addressPart[1]);
-        
+
         return possibleNames[Math.floor(Math.random() * possibleNames.length)];
     }
 
@@ -408,7 +428,7 @@ class Line {
         this.name = this.initialName;
         this.polyline = L.polyline([], { color: this.lineType.color });
         this.polyline.on("click", event => this.onClick(event));
-        
+
         document.ui.build();
     }
 
@@ -418,7 +438,7 @@ class Line {
 
     addStationAtIndex(station, index) {
         this.stations.splice(index, 0, station);
-        if(!this.map._importing){
+        if (!this.map._importing) {
             this.redraw();
         }
     }
@@ -448,20 +468,20 @@ class Line {
 
     isPointBetweenPoints(a, b, c) {
         const epsilon = 20;
-        const lineDist = this.map.Lmap.distance(a,b);
+        const lineDist = this.map.Lmap.distance(a, b);
         const distancePoint = this.map.Lmap.distance(a, c) + this.map.Lmap.distance(b, c);
-        if (lineDist + epsilon > distancePoint && lineDist - epsilon < distancePoint){
+        if (lineDist + epsilon > distancePoint && lineDist - epsilon < distancePoint) {
             return true;
         }
         return false;
     }
 
     getStationsNextToPoint(point) {
-        for(let i=1; i<this.stations.length;i++) {
-            let a = this.stations[i-1].position;
+        for (let i = 1; i < this.stations.length; i++) {
+            let a = this.stations[i - 1].position;
             let b = this.stations[i].position;
-            if(this.isPointBetweenPoints(a, b, point)){
-                return { index: i};
+            if (this.isPointBetweenPoints(a, b, point)) {
+                return { index: i };
             }
         }
     }
@@ -471,10 +491,10 @@ class Line {
 
         // Add station by clicking between stations
         let { index } = this.getStationsNextToPoint(evt.latlng);
-        if(!index){
+        if (!index) {
             return;
         }
-        let station = new Station(evt.latlng, this, { doNotAddToLine: true});
+        let station = new Station(evt.latlng, this, { doNotAddToLine: true });
         this.addStationAtIndex(station, index);
         document.undoManager.push({ type: "create station", station });
         document.ui.build();
@@ -507,10 +527,10 @@ class Line {
     remove() {
         this.previousStations = this.stations.slice();
         const stationCount = this.stations.length;
-        for(let i=0; i<stationCount; i++){
+        for (let i = 0; i < stationCount; i++) {
             this.stations[0].remove();
         }
-        if(this.map.line == this){
+        if (this.map.line == this) {
             this.map.finishLine();
         }
         document.ui.build();
