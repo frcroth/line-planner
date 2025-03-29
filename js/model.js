@@ -374,7 +374,13 @@ class Station {
         let addressParts = Object.entries(responseObject["address"]);
         let possibleNames = addressParts.filter(addressPart => this.interestingAddressParts.includes(addressPart[0])).map(addressPart => addressPart[1]);
 
-        return possibleNames[Math.floor(Math.random() * possibleNames.length)];
+        // Ensure that the name has not been already used
+        let possibleNamesFiltered = possibleNames.filter(name => !this.map.stations.some(station => station.name == name));
+        if (possibleNamesFiltered.length == 0) {
+            return possibleNames[0];
+        }
+
+        return possibleNamesFiltered[Math.floor(Math.random() * possibleNamesFiltered.length)];
     }
 
 
@@ -459,8 +465,12 @@ class Line {
             let a = prevStation.position;
             let b = station.position;
 
-            let controlPoint1 = new ControlPoint(this, L.latLng(a.lat, a.lng + (b.lng - a.lng) * 0.5))
-            let controlPoint2 = new ControlPoint(this, L.latLng(b.lat, b.lng - (b.lng - a.lng) * 0.5))
+            // Create two control points on the line between the two stations
+            // Without moving them, the curve will be a straight line
+
+            let direction = L.latLng(b.lat - a.lat, b.lng - a.lng);
+            let controlPoint1 = new ControlPoint(this, L.latLng(a.lat + direction.lat / 3, a.lng + direction.lng / 3));
+            let controlPoint2 = new ControlPoint(this, L.latLng(a.lat + 2 * direction.lat / 3, a.lng + 2 * direction.lng / 3));
 
             // Insert control points into control points array
             this.controlPoints.splice(2 * index - 2, 0, controlPoint1);
@@ -496,7 +506,7 @@ class Line {
     }
 
     get initialName() {
-        return `${this.lineType.lineNamePrefix} ${this.id}`;
+        return `${this.lineType.lineNamePrefix}${this.id}`;
     }
 
     isPointBetweenPoints(a, b, c) {

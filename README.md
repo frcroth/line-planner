@@ -5,7 +5,7 @@ Line planner is a simple website that allows the planning of train lines (e.g. s
 
 [Try it!](https://frcroth.github.io/line-planner/)  
 
-![](doc/Screenshot_20210314_155624.png)
+![](doc/Screenshot_20250329_125451.png)
 
 ### Features
 - Create and edit lines on an open street map
