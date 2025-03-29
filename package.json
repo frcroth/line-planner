@@ -16,6 +16,6 @@
   },
   "homepage": "https://github.com/frcroth/line-planner#readme",
   "devDependencies": {
-    "eslint": "^7.20.0"
+    "eslint": "^9.23.0"
   }
 }

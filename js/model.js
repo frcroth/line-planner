@@ -22,7 +22,7 @@ class Map {
         }
 
         return [Number.parseFloat(center.split("(")[1].split(",")[0]),
-        Number.parseFloat(center.split(" ")[1].split(")")[0])];
+            Number.parseFloat(center.split(" ")[1].split(")")[0])];
     }
 
 

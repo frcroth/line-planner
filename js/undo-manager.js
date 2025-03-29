@@ -33,42 +33,42 @@ class UndoManager {
         let line = operation.line;
         let controlPoint = operation.controlPoint;
         switch (operation.type) {
-            case "create station":
-                station.remove();
-                break;
-            case "cross station":
-                station.removeCross(line);
-                break;
-            case "rename station":
-                station.setName(operation.old);
-                break;
-            case "remove station":
-                station.restore();
-                break;
-            case "move station":
-                station.position = operation.old;
-                station.refreshGraphics();
-                break;
-            case "create circle":
-                operation.line.stations.pop();
-                operation.line.redraw();
-                break;
-            case "rename line":
-                line.setName(operation.old);
-                break;
-            case "remove line":
-                line.restore();
-                break;
-            case "change line type":
-                line.lineType = line.map.lineTypes[operation.old];
-                line.stations.forEach(station => station.refreshGraphics());
-                line.redraw();
-                break;
-            case "move control point":
-                controlPoint.position = operation.old;
-                controlPoint.line.redraw();
-                controlPoint.generateMarker();
-                break;
+        case "create station":
+            station.remove();
+            break;
+        case "cross station":
+            station.removeCross(line);
+            break;
+        case "rename station":
+            station.setName(operation.old);
+            break;
+        case "remove station":
+            station.restore();
+            break;
+        case "move station":
+            station.position = operation.old;
+            station.refreshGraphics();
+            break;
+        case "create circle":
+            operation.line.stations.pop();
+            operation.line.redraw();
+            break;
+        case "rename line":
+            line.setName(operation.old);
+            break;
+        case "remove line":
+            line.restore();
+            break;
+        case "change line type":
+            line.lineType = line.map.lineTypes[operation.old];
+            line.stations.forEach(station => station.refreshGraphics());
+            line.redraw();
+            break;
+        case "move control point":
+            controlPoint.position = operation.old;
+            controlPoint.line.redraw();
+            controlPoint.generateMarker();
+            break;
         }
         document.ui.build();
     }
@@ -98,42 +98,42 @@ class UndoManager {
         let station = operation.station;
         let line = operation.line;
         switch (operation.type) {
-            case "create station":
-                station.restore();
-                break;
-            case "cross station":
-                station.restoreCross(line, operation.index);
-                break;
-            case "rename station":
-                station.setName(operation.new);
-                break;
-            case "remove station":
-                station.remove();
-                break;
-            case "move station":
-                station.position = operation.new;
-                station.refreshGraphics();
-                break;
-            case "create circle":
-                operation.line.addStation(station);
-                operation.line.redraw();
-                break;
-            case "rename line":
-                line.setName(operation.new);
-                break;
-            case "remove line":
-                line.remove();
-                break;
-            case "change line type":
-                line.lineType = line.map.lineTypes[operation.new];
-                line.stations.forEach(station => station.refreshGraphics());
-                line.reAddPolyLine();
-                break;
-            case "move control point":
-                operation.controlPoint.position = operation.new;
-                operation.controlPoint.line.redraw();
-                operation.controlPoint.generateMarker();
-                break;
+        case "create station":
+            station.restore();
+            break;
+        case "cross station":
+            station.restoreCross(line, operation.index);
+            break;
+        case "rename station":
+            station.setName(operation.new);
+            break;
+        case "remove station":
+            station.remove();
+            break;
+        case "move station":
+            station.position = operation.new;
+            station.refreshGraphics();
+            break;
+        case "create circle":
+            operation.line.addStation(station);
+            operation.line.redraw();
+            break;
+        case "rename line":
+            line.setName(operation.new);
+            break;
+        case "remove line":
+            line.remove();
+            break;
+        case "change line type":
+            line.lineType = line.map.lineTypes[operation.new];
+            line.stations.forEach(station => station.refreshGraphics());
+            line.reAddPolyLine();
+            break;
+        case "move control point":
+            operation.controlPoint.position = operation.new;
+            operation.controlPoint.line.redraw();
+            operation.controlPoint.generateMarker();
+            break;
         }
         document.ui.build();
     }
