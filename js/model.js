@@ -8,6 +8,7 @@ class Map {
         this.lines = [];
         this.currentLineType = this.lineTypes["u"];
         this._initialized = true;
+        this.showControlPoints = true;
     }
 
     get tileServerUrl() {
@@ -21,7 +22,7 @@ class Map {
         }
 
         return [Number.parseFloat(center.split("(")[1].split(",")[0]),
-            Number.parseFloat(center.split(" ")[1].split(")")[0])];
+        Number.parseFloat(center.split(" ")[1].split(")")[0])];
     }
 
 
@@ -148,6 +149,7 @@ class Map {
                 id: line.id,
                 stations: line.stations.map(s => s.id),
                 lineType: line.lineType.id,
+                controlPoints: line.controlPoints.map(c => c.position),
                 name: line.name
             })
         );
@@ -196,6 +198,7 @@ class Map {
             this.line = this.getLineById(lineIdTransform(line.id));
             this.line.stations = [];
             this.line.stations = line.stations.map(stationId => newStations.find(s => s.id === stationIdTransform(stationId)));
+            this.line.controlPoints = line.controlPoints.map(controlPoint => new ControlPoint(this.line, controlPoint));
             this.line.redraw();
         });
 
@@ -353,7 +356,7 @@ class Station {
     }
 
     get interestingAddressParts() {
-        return ["road", "leisure", "quarter", "tourism", "neighborhood"];
+        return ["road", "leisure", "quarter", "tourism", "neighbourhood", "suburb"];
     }
 
     async clientRequestThrottling() {
@@ -438,8 +441,7 @@ class Line {
         this.stations = []; // First station is start, last is end
         this.lineType = lineType;
         this.name = this.initialName;
-        this.polyline = L.polyline([], { color: this.lineType.color });
-        this.polyline.on("click", event => this.onClick(event));
+        this.controlPoints = [];
 
         document.ui.build();
     }
@@ -450,6 +452,21 @@ class Line {
 
     addStationAtIndex(station, index) {
         this.stations.splice(index, 0, station);
+
+        // Add control points
+        if (index > 0) {
+            let prevStation = this.stations[index - 1];
+            let a = prevStation.position;
+            let b = station.position;
+
+            let controlPoint1 = new ControlPoint(this, L.latLng(a.lat, a.lng + (b.lng - a.lng) * 0.5))
+            let controlPoint2 = new ControlPoint(this, L.latLng(b.lat, b.lng - (b.lng - a.lng) * 0.5))
+
+            // Insert control points into control points array
+            this.controlPoints.splice(2 * index - 2, 0, controlPoint1);
+            this.controlPoints.splice(2 * index - 1, 0, controlPoint2);
+        }
+
         if (!this.map._importing) {
             this.redraw();
         }
@@ -462,23 +479,20 @@ class Line {
 
     removeStationByIndex(index) {
         this.stations.splice(index, 1);
+
+        // Remove control points
+        if (index > 0) {
+            this.controlPoints[2 * index - 1].marker.remove();
+            this.controlPoints[2 * index - 2].marker.remove();
+
+            this.controlPoints.splice(2 * index - 2, 2);
+        }
+
         this.redraw();
     }
 
     get isCircleLine() {
         return this.stations[0] == this.stations[this.stations.length - 1];
-    }
-
-    getPolyLine() {
-        this.polyline.setLatLngs(this.stations.map(station => station.position));
-        return this.polyline;
-    }
-
-    reAddPolyLine() {
-        this.polyline?.remove();
-        this.polyline = L.polyline([], { color: this.lineType.color });
-        this.polyline.on("click", event => this.onClick(event));
-        this.redraw();
     }
 
     get initialName() {
@@ -505,6 +519,7 @@ class Line {
         }
     }
 
+    // TODO: Add this to the curve
     onClick(evt) {
         L.DomEvent.stopPropagation(evt);
 
@@ -530,10 +545,9 @@ class Line {
 
         if (lineTypeIndex) {
             let newLineType = Object.values(this.map.lineTypes)[lineTypeIndex];
-            document.undoManager.push({ type: "change line type", line: this, old: this.lineType.id, new: newLineType.id});
+            document.undoManager.push({ type: "change line type", line: this, old: this.lineType.id, new: newLineType.id });
             this.lineType = newLineType;
             this.stations.forEach(station => station.refreshGraphics());
-            this.reAddPolyLine();
         }
     }
 
@@ -577,8 +591,86 @@ class Line {
         this.previousStations.forEach(station => station.restore());
     }
 
+    getCurve(stationPairs) {
+        let curve = [];
+        for (let i = 0; i < stationPairs.length; i++) {
+            let a = stationPairs[i][0].position;
+            let b = stationPairs[i][1].position;
+            // Get control points
+
+            let controlPoint1 = this.controlPoints[2 * i];
+            let controlPoint2 = this.controlPoints[2 * i + 1];
+
+            // Add start to curve
+            if (i == 0) {
+                curve = curve.concat(["M", [a.lat, a.lng]]);
+            }
+            curve = curve.concat(["C", [controlPoint1.position.lat, controlPoint1.position.lng], [controlPoint2.position.lat, controlPoint2.position.lng], [b.lat, b.lng]]);
+        }
+        return curve;
+    }
+
     redraw() {
-        this.getPolyLine().addTo(this.map.Lmap);
+        // Draw curve
+        // Get all station pairs
+        let stationPairs = [];
+        for (let i = 0; i < this.stations.length - 1; i++) {
+            stationPairs.push([this.stations[i], this.stations[i + 1]]);
+        }
+        // Draw the curves
+        let curveData = this.getCurve(stationPairs);
+        this.curve?.remove();
+        this.curve = L.curve(curveData, { color: this.lineType.color, className: "line", id: this.id, interactive: true });
+        this.curve.addTo(this.map.Lmap);
+
+        // Draw control points
+        this.controlPoints.forEach(controlPoint => {
+
+            if (this.map.showControlPoints) {
+                controlPoint.generateMarker();
+            } else {
+                controlPoint.marker?.remove();
+            }
+        });
+
+    }
+}
+
+class ControlPoint {
+    constructor(line, position) {
+        this.line = line;
+        this.position = position;
+        this.map = document.map;
+        this.marker = null;
+    }
+
+    generateMarker() {
+        if (this.marker) {
+            this.marker.remove();
+        }
+        this.marker = L.marker(this.position, { draggable: true, color: this.line.lineType.color });
+        this.marker.addTo(this.map.Lmap);
+        this.marker.on("click", (e) => {
+            L.DomEvent.stopPropagation(e);
+            console.log(this);
+        });
+        this.initDraggable();
+    }
+
+    initDraggable() {
+        this.marker.on("dragstart", () => {
+            this._preDragPosition = this.position;
+        });
+
+        this.marker.on("drag", (e) => {
+            let newPosition = e.target.getLatLng();
+            this.position = newPosition;
+        });
+
+        this.marker.on("dragend", () => {
+            this.line.redraw();
+            document.undoManager.push({ type: "move control point", controlPoint: this, old: this._preDragPosition, new: this.position });
+        });
     }
 }
 

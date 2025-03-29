@@ -9,6 +9,7 @@ class UI {
         this.initLineSelector();
         this.initImportExport();
         this.initReverseGeocode();
+        this.initShowControlPoints();
     }
 
     initLineSelector() {
@@ -29,6 +30,15 @@ class UI {
         this.reverseGeocodeBox = document.getElementById("reverse-geocode");
         this.reverseGeocodeBox.checked = false;
         this.reverseGeocodeBox.onchange = () => document.map.useReverseGeocode = this.reverseGeocodeBox.checked;
+    }
+
+    initShowControlPoints() {
+        this.showControlPointsBox = document.getElementById("show-control-points");
+        this.showControlPointsBox.checked = true;
+        this.showControlPointsBox.onchange = () => {
+            document.map.showControlPoints = this.showControlPointsBox.checked;
+            document.map.lines.forEach(line => line.redraw());
+        };
     }
 
     import() {
