@@ -11,5 +11,5 @@ Line planner is a simple website that allows the planning of train lines (e.g. s
 - Line segments can be curves or straight
 - Create "U-Bahn" or "S-Bahn" lines
 - Import and export created lines
-- Automatically name stations via reverse geocode
+- Automatically name stations via OSM reverse geocode or proximity to VBB stations
 - Everything is undo and redoable

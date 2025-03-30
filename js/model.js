@@ -1,5 +1,7 @@
 /* global L, Swal*/
 import { ajax } from "./utilities.js";
+import { getStations } from "../lib/stations.js";
+import { findClosestStation } from "../lib/closestStation.js";
 
 class Map {
     constructor() {
@@ -9,6 +11,7 @@ class Map {
         this.currentLineType = this.lineTypes["u"];
         this._initialized = true;
         this.showControlPoints = true;
+        this.vbbStations = getStations();
     }
 
     get tileServerUrl() {
@@ -231,9 +234,7 @@ class Station {
         }
 
         this.generateMarker();
-        if (this.map.useReverseGeocode) {
-            this.setBetterName();
-        }
+        this.setBetterName();
 
         document.ui.build();
     }
@@ -305,7 +306,7 @@ class Station {
     generateMarker() {
         this.marker?.remove();
         this.marker = new L.marker(this.position, { opacity: 0.001 });
-        this.marker.bindTooltip(this.name, { permanent: true, className: "station-name station-name-" + this.primaryLineType.id, offset: [0.0005, 0] });
+        this.marker.bindTooltip(this.name, { permanent: true, className: "station-name station-name-" + this.primaryLineType.id});
         this.marker.addTo(this.map.Lmap);
     }
 
@@ -348,7 +349,17 @@ class Station {
     }
 
     async setBetterName() {
-        this.setName(await this.getReverseGeocode());
+        let betterName = null;
+        if (this.map.vbbStations) {
+            let closestStation = findClosestStation(this.position.lat, this.position.lng , this.map.vbbStations);
+            if (closestStation.distance < 250) {
+                betterName = closestStation.station.name;
+            }
+        }
+        if(!betterName && this.map.useReverseGeocode) {
+            betterName = await this.getReverseGeocode();
+        }
+        this.setName(betterName || this.name);
     }
 
     reverseGeocodeURL() {

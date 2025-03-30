@@ -17,5 +17,8 @@
   "homepage": "https://github.com/frcroth/line-planner#readme",
   "devDependencies": {
     "eslint": "^9.23.0"
+  },
+  "dependencies": {
+    "vbb-stations": "^8.19.0"
   }
 }
