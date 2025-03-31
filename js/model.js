@@ -698,3 +698,6 @@ class ControlPoint {
 Line.lineId = 1;
 
 document.map = new Map();
+if(document.ui) {
+    document.ui.restoreShare();
+}

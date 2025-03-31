@@ -24,6 +24,8 @@ class UI {
         this.upload = document.getElementById("upload-input");
         this.exportButton = document.getElementById("export-button");
         this.exportButton.onclick = () => this.export();
+        this.shareButton = document.getElementById("share-button");
+        this.shareButton.onclick = () => this.share();
     }
 
     initReverseGeocode() {
@@ -60,6 +62,37 @@ class UI {
         });
 
         saveAs(blob, filename);
+    }
+
+    share() {
+        let content = this.model.export();
+        let uriEncoded = encodeURIComponent(content);
+
+        // Write exported content to current URL
+        let url = new URL(window.location.href);
+        url.searchParams.set("share", uriEncoded);
+        window.history.pushState({}, "", url);
+        // Copy URL to clipboard
+        navigator.clipboard.writeText(url.href).then(() => {
+            Swal.fire("Sharing URL copied to clipboard!");
+        }, () => {
+            Swal.fire("Failed to copy exported content to clipboard, copy the URL!");
+        }
+        );
+    }
+
+    restoreShare() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const share = urlParams.get("share");
+        if (share) {
+            // Decode the URI component
+            const decodedContent = decodeURIComponent(share);
+            // Import the content
+            document.map.import(decodedContent);
+            // Remove the share parameter from the URL
+            urlParams.delete("share");
+            window.history.pushState({}, "", `${window.location.pathname}?${urlParams}`);
+        }
     }
 
     build() {
