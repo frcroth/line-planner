@@ -32,18 +32,41 @@
     height: 60px;
     line-height: 60px;
     background-color: #f5f5f5;
+    z-index: 1000;
 }
 
 #empty-box {
-    height: 60px;
+    height: 150px;
 }
 
 .station-label {
     margin-right: 5px;
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+.line-row {
+    display: flex;
+    flex-wrap: wrap; /* Allow items to wrap to the next row */
+    gap: 10px; /* Add spacing between items */
+}
+
+.line {
+    flex: 1 1 300px; /* Allow lines to grow, shrink, and set a minimum width of 300px */
+    max-width: 100%; /* Prevent lines from exceeding the container width */
+    min-width: 300px; /* Set the minimum width for each line */
+    box-sizing: border-box; /* Include padding and border in the width calculation */
+}
+
+.line-head {
+    margin-bottom: 25px;
+    margin-top: 5px;
 }
 
 .line-label {
     margin-right: 5px;
+    margin-top: auto;
+    margin-bottom: auto;
     font-weight: bold;
     font-size: 1.3em;
 }
@@ -60,4 +83,51 @@
 
 .small-desc {
     font-size: 0.8em;
+}
+
+.station-item {
+    position: relative;
+    padding-left: 30px; /* Space for the line and dots */
+    margin-bottom: 20px; /* Spacing between stations */
+}
+
+.station-item::before {
+    content: "";
+    position: absolute;
+    left: 15px; /* Position of the line */
+    top: -20px; /* Extend the line upwards to connect with the previous station */
+    bottom: 0;
+    width: 2px; /* Thickness of the line */
+    z-index: 0; /* Ensure the line is behind the dots */
+}
+
+.station-item:first-child::before {
+    top: 10px; /* Prevent the line from extending above the first station */
+}
+
+.station-item::after {
+    content: "";
+    position: absolute;
+    left: 11px; /* Center the dot on the line */
+    top: 10px; /* Position of the dot */
+    width: 10px; /* Diameter of the dot */
+    height: 10px; /* Diameter of the dot */
+    border-radius: 50%; /* Make the dot circular */
+    z-index: 1; /* Ensure the dot is above the line */
+}
+
+.blue-line .station-item::before {
+    background-color: #115d91;
+}
+
+.blue-line .station-item::after {
+    background-color: #115d91;
+}
+
+.green-line .station-item::before {
+    background-color: #008e4e;
+}
+
+.green-line .station-item::after {
+    background-color: #008e4e;
 }

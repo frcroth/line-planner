@@ -98,7 +98,7 @@ class UI {
     build() {
         this.container.innerHTML = "";
         this.lineOverview = document.createElement("div");
-        this.lineOverview.classList.add("row");
+        this.lineOverview.classList.add("line-row");
         this.container.appendChild(this.lineOverview);
 
         if (!this.model) {
@@ -122,7 +122,7 @@ class UI {
         lineLabel.innerHTML = line.name;
 
         const lineHead = document.createElement("div");
-        lineHead.classList.add("form-inline", "container");
+        lineHead.classList.add("form-inline", "container", "line-head");
         lineContainer.appendChild(lineHead);
         lineHead.appendChild(lineLabel);
 
@@ -151,20 +151,39 @@ class UI {
         lineHead.appendChild(lineContinueButton);
 
         const lineTypeChangeButton = document.createElement("button");
-        lineTypeChangeButton.onclick = () => line.changeLineType();
+        lineTypeChangeButton.onclick = () => this.changeLineType(lineContainer, line);
         lineTypeChangeButton.title = "Change line type";
         lineTypeChangeButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
         lineTypeChangeButton.innerHTML = "<i class=\"fas fa-exchange-alt\"></i>";
         lineHead.appendChild(lineTypeChangeButton);
 
-        lineContainer.classList.add("line", "col");
+        lineContainer.classList.add("line", "card");
+        if (line.lineType.id === "u") {
+            lineContainer.classList.remove("green-line");
+            lineContainer.classList.add("blue-line");
+        } else if (line.lineType.id === "s") {
+            lineContainer.classList.remove("blue-line");
+            lineContainer.classList.add("green-line");
+        }
         this.lineOverview.appendChild(lineContainer);
         this.lineContainers[line.id] = lineContainer;
     }
 
+    async changeLineType(lineContainer, line) {
+        await line.changeLineType();
+        const lineType = line.lineType;
+        if (lineType.id === "u") {
+            lineContainer.classList.remove("green-line");
+            lineContainer.classList.add("blue-line");
+        } else if (lineType.id === "s") {
+            lineContainer.classList.remove("blue-line");
+            lineContainer.classList.add("green-line");
+        }
+    }
+
     addStation(station, line) {
         const stationContainer = document.createElement("div");
-        stationContainer.classList.add("station-container", "container", "form-inline");
+        stationContainer.classList.add("station-container", "container", "station-item");
         this.stationContainers[station.id] = stationContainer;
 
         const stationLabel = document.createElement("label");
