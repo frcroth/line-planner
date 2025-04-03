@@ -131,3 +131,9 @@
 .green-line .station-item::after {
     background-color: #008e4e;
 }
+
+/* Active line */
+.active {
+    border-color: #f37907 !important;
+    border-width: 2px !important;
+}

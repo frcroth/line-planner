@@ -120,7 +120,7 @@ class Map {
             this.lines.push(this.line);
         }
 
-        let station = new Station(position, this.line);
+        let station = new Station(position, this.line, { guessDirection: true });
 
         document.undoManager.push({ type: "create station", station });
     }
@@ -225,7 +225,7 @@ class Station {
         this.position = position;
         this.name = this.getInitialName();
         if (!options.doNotAddToLine) {
-            line.addStation(this);
+            line.addStation(this, options.guessDirection);
         }
         this.lines = [line];
 
@@ -463,16 +463,23 @@ class Line {
         document.ui.build();
     }
 
-    addStation(station) {
-        this.addStationAtIndex(station, this.stations.length);
+    addStation(station, guessDirection = false) {
+        let insertionIndex = this.stations.length;
+        if (guessDirection && this.stations.length > 0) {
+            let distanceToFirst = this.map.Lmap.distance(this.stations[0].position, station.position);
+            let distanceToLast = this.map.Lmap.distance(this.stations[this.stations.length - 1].position, station.position);
+            insertionIndex = distanceToFirst < distanceToLast ? 0 : this.stations.length;
+        }
+        this.addStationAtIndex(station, insertionIndex);
     }
 
     addStationAtIndex(station, index) {
         this.stations.splice(index, 0, station);
 
         // Add control points
-        if (index > 0) {
-            let prevStation = this.stations[index - 1];
+        if (this.stations.length > 1) {
+            let isAddedInFront = index == 0;
+            let prevStation = isAddedInFront ? this.stations[1] : this.stations[index - 1];
             let a = prevStation.position;
             let b = station.position;
 
@@ -484,8 +491,8 @@ class Line {
             let controlPoint2 = new ControlPoint(this, L.latLng(a.lat + 2 * direction.lat / 3, a.lng + 2 * direction.lng / 3));
 
             // Insert control points into control points array
-            this.controlPoints.splice(2 * index - 2, 0, controlPoint1);
-            this.controlPoints.splice(2 * index - 1, 0, controlPoint2);
+            let controlPointsToInsert = isAddedInFront ? [controlPoint1, controlPoint2] : [controlPoint2, controlPoint1];
+            this.controlPoints.splice(2 * index, 0, ...controlPointsToInsert);
         }
 
         if (!this.map._importing) {
@@ -502,14 +509,24 @@ class Line {
         this.stations.splice(index, 1);
 
         // Remove control points
+        if (this.controlPoints.length == 0) {
+            this.redraw();  
+            return;
+        }
         if (index > 0) {
             this.controlPoints[2 * index - 1].marker.remove();
             this.controlPoints[2 * index - 2].marker.remove();
 
             this.controlPoints.splice(2 * index - 2, 2);
-        }
+        } else {
+            // This is the first station
+            this.controlPoints[0].marker.remove();
+            this.controlPoints[1].marker.remove();
 
-        this.redraw();
+            this.controlPoints.splice(0, 2);
+        }
+        this.redraw();  
+
     }
 
     get isCircleLine() {
@@ -540,7 +557,6 @@ class Line {
         }
     }
 
-    // TODO: Add this to the curve
     onClick(evt) {
         L.DomEvent.stopPropagation(evt);
 
@@ -549,6 +565,7 @@ class Line {
         if (!index) {
             return;
         }
+        // Note that currently, the control points of the previous line segments are not moved
         let station = new Station(evt.latlng, this, { doNotAddToLine: true });
         this.addStationAtIndex(station, index);
         document.undoManager.push({ type: "create station", station });
@@ -642,6 +659,7 @@ class Line {
         let curveData = this.getCurve(stationPairs);
         this.curve?.remove();
         this.curve = L.curve(curveData, { color: this.lineType.color, className: "line", id: this.id, interactive: true });
+        this.curve.on("click", (e) => this.onClick(e));
         this.curve.addTo(this.map.Lmap);
 
         // Draw control points

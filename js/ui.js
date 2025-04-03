@@ -109,14 +109,15 @@ class UI {
         }
         this.model.lines.forEach(line => {
             if (line.stations.length != 0) {
-                this.addLine(line);
+                this.addLine(line,  this.model.line == line);
                 line.stations.forEach(station => this.addStation(station, line));
             }
         });
     }
 
-    addLine(line) {
+    addLine(line, isActive) {
         const lineContainer = document.createElement("div");
+        lineContainer.id = "line-" + line.id;
         const lineLabel = document.createElement("p");
         lineLabel.classList.add("line-label");
         lineLabel.innerHTML = line.name;
@@ -144,7 +145,7 @@ class UI {
         lineHead.appendChild(lineDeletionButton);
 
         const lineContinueButton = document.createElement("button");
-        lineContinueButton.onclick = () => document.map.line = line;
+        lineContinueButton.onclick = () => this.continueLine(line);
         lineContinueButton.title = "Continue line";
         lineContinueButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");
         lineContinueButton.innerHTML = "<i class=\"far fa-arrow-alt-circle-right\"></i>";
@@ -165,6 +166,11 @@ class UI {
             lineContainer.classList.remove("blue-line");
             lineContainer.classList.add("green-line");
         }
+        if (isActive) {
+            lineContainer.classList.add("active");
+        } else {
+            lineContainer.classList.remove("active");
+        }
         this.lineOverview.appendChild(lineContainer);
         this.lineContainers[line.id] = lineContainer;
     }
@@ -179,6 +185,15 @@ class UI {
             lineContainer.classList.remove("blue-line");
             lineContainer.classList.add("green-line");
         }
+    }
+
+    continueLine(line) {
+        document.map.line = line;
+        document.querySelectorAll(".line").forEach(lineContainer => {
+            lineContainer.classList.remove("active");
+        });
+        const lineContainer = document.getElementById("line-" + line.id);
+        lineContainer.classList.add("active");
     }
 
     addStation(station, line) {
