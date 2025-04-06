@@ -9,12 +9,13 @@ class UI {
         this.initLineSelector();
         this.initImportExport();
         this.initReverseGeocode();
+        this.initShowStationNames();
         this.initShowControlPoints();
     }
 
     initLineSelector() {
-        document.getElementById("u-bahn-radio").onchange = () => document.map.selectLineType("u");
-        document.getElementById("s-bahn-radio").onchange = () => document.map.selectLineType("s");
+        document.getElementById("u-bahn-radio").onchange = () => this.model.selectLineType("u");
+        document.getElementById("s-bahn-radio").onchange = () => this.model.selectLineType("s");
         document.getElementById("u-bahn-radio").checked = true;
     }
 
@@ -31,15 +32,24 @@ class UI {
     initReverseGeocode() {
         this.reverseGeocodeBox = document.getElementById("reverse-geocode");
         this.reverseGeocodeBox.checked = false;
-        this.reverseGeocodeBox.onchange = () => document.map.useReverseGeocode = this.reverseGeocodeBox.checked;
+        this.reverseGeocodeBox.onchange = () => this.model.useReverseGeocode = this.reverseGeocodeBox.checked;
     }
 
     initShowControlPoints() {
         this.showControlPointsBox = document.getElementById("show-control-points");
         this.showControlPointsBox.checked = true;
         this.showControlPointsBox.onchange = () => {
-            document.map.showControlPoints = this.showControlPointsBox.checked;
-            document.map.lines.forEach(line => line.redraw());
+            this.model.showControlPoints = this.showControlPointsBox.checked;
+            this.model.lines.forEach(line => line.redraw());
+        };
+    }
+
+    initShowStationNames() {
+        this.showStationNamesBox = document.getElementById("show-station-names");
+        this.showStationNamesBox.checked = true;
+        this.showStationNamesBox.onchange = () => {
+            this.model.showStationNames = this.showStationNamesBox.checked;
+            this.model.lines.forEach(line => line.stations.forEach(station => station.generateMarker()));
         };
     }
 
@@ -88,7 +98,7 @@ class UI {
             // Decode the URI component
             const decodedContent = decodeURIComponent(share);
             // Import the content
-            document.map.import(decodedContent);
+            this.model.import(decodedContent);
             // Remove the share parameter from the URL
             urlParams.delete("share");
             window.history.pushState({}, "", `${window.location.pathname}?${urlParams}`);
@@ -188,7 +198,7 @@ class UI {
     }
 
     continueLine(line) {
-        document.map.line = line;
+        this.model.line = line;
         document.querySelectorAll(".line").forEach(lineContainer => {
             lineContainer.classList.remove("active");
         });
@@ -215,9 +225,7 @@ class UI {
 
         const stationDeleteButton = document.createElement("button");
         stationDeleteButton.onclick = () => {
-            document.undoManager.push({ type: "remove station", station });
-            station.remove();
-            document.ui.build();
+            this.model.removeStation(station, line);
         };
         stationDeleteButton.title = "Delete station";
         stationDeleteButton.classList.add("btn", "button", "btn-sm", "btn-outline-secondary");

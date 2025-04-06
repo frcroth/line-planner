@@ -39,6 +39,9 @@ class UndoManager {
         case "cross station":
             station.removeCross(line);
             break;
+        case "remove cross station":
+            station.restoreCross(line, operation.index);
+            break;
         case "rename station":
             station.setName(operation.old);
             break;
@@ -103,6 +106,9 @@ class UndoManager {
             break;
         case "cross station":
             station.restoreCross(line, operation.index);
+            break;
+        case "remove cross station":
+            station.removeCross(line);
             break;
         case "rename station":
             station.setName(operation.new);

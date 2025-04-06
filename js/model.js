@@ -5,18 +5,21 @@ import { findClosestStation } from "../lib/closestStation.js";
 
 class Map {
     constructor() {
+        this.tileServerUrl = "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png";
+
         this.init();
         this.cache = {};
         this.lines = [];
         this.currentLineType = this.lineTypes["u"];
         this._initialized = true;
+
+        this.showStationNames = true;
         this.showControlPoints = true;
+
         this.vbbStations = getStations();
+
     }
 
-    get tileServerUrl() {
-        return "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png";
-    }
 
     readCenter() {
         let center = localStorage.getItem("map-center");
@@ -36,7 +39,7 @@ class Map {
         });
 
         L.tileLayer(this.tileServerUrl, {
-            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors"
+            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors, Tiles style by <a href=\"https://www.hotosm.org/\" target=\"_blank\">Humanitarian OpenStreetMap Team</a> hosted by <a href=\"https://openstreetmap.fr/\" target=\"_blank\">OpenStreetMap France</a>",
         }).addTo(this.Lmap);
 
         this.Lmap.on("click", (event) => this.onMapClick(event));
@@ -99,10 +102,12 @@ class Map {
             if (station.lines.includes(this.line)) {
                 return; // Do not cross the station with itself!
             }
-            this.line.addStation(station);
+            this.line.addStation(station, true);
             station.addCross(this.line);
             this.line.redraw();
-            document.undoManager.push({ type: "cross station", station, line: this.line, index: this.line.stations.length - 1 });
+            let index = this.line.stations.indexOf(station);
+            document.undoManager.push({ type: "cross station", station, line: this.line, index });
+            document.ui.build();
             return;
         }
 
@@ -123,6 +128,17 @@ class Map {
         let station = new Station(position, this.line, { guessDirection: true });
 
         document.undoManager.push({ type: "create station", station });
+    }
+
+    removeStation(station, line) {
+        if(station.lines.length > 1) {
+            document.undoManager.push({ type: "remove cross station", station, line, index: line.stations.indexOf(station) });
+            station.removeCross(line);
+        } else {
+            document.undoManager.push({ type: "remove station", station });
+            station.remove();
+        }
+        document.ui.build();
     }
 
     get stations() {
@@ -306,7 +322,7 @@ class Station {
     generateMarker() {
         this.marker?.remove();
         this.marker = new L.marker(this.position, { opacity: 0.001 });
-        this.marker.bindTooltip(this.name, { permanent: true, className: "station-name station-name-" + this.primaryLineType.id});
+        this.marker.bindTooltip(this.name, { permanent: this.map.showStationNames, className: "station-name station-name-" + this.primaryLineType.id});
         this.marker.addTo(this.map.Lmap);
     }
 
@@ -397,7 +413,9 @@ class Station {
 
     setName(name) {
         this.name = name;
-        this.generateMarker();
+        if (!this._deleted) {
+            this.generateMarker();
+        }
         document.ui.build();
     }
 
@@ -422,6 +440,7 @@ class Station {
     }
 
     remove() {
+        this._deleted = true;
         this.overlay.remove();
         this.linePositions = {}; // Used to restore the station to the correct position in each line
         this.lines.forEach(line => {
@@ -438,6 +457,7 @@ class Station {
     }
 
     restore() {
+        this._deleted = false;
         this.overlay.addTo(this.map.Lmap);
         this.lines.forEach(line => line.addStationAtIndex(this, this.linePositions[line.id]));
         this.generateMarker();
@@ -491,7 +511,7 @@ class Line {
             let controlPoint2 = new ControlPoint(this, L.latLng(a.lat + 2 * direction.lat / 3, a.lng + 2 * direction.lng / 3));
 
             // Insert control points into control points array
-            let controlPointsToInsert = isAddedInFront ? [controlPoint1, controlPoint2] : [controlPoint2, controlPoint1];
+            let controlPointsToInsert = isAddedInFront ? [controlPoint2, controlPoint1] : [controlPoint1, controlPoint2];
             this.controlPoints.splice(2 * index, 0, ...controlPointsToInsert);
         }
 
@@ -664,14 +684,12 @@ class Line {
 
         // Draw control points
         this.controlPoints.forEach(controlPoint => {
-
             if (this.map.showControlPoints) {
                 controlPoint.generateMarker();
             } else {
                 controlPoint.marker?.remove();
             }
         });
-
     }
 }
 
